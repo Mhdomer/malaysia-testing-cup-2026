@@ -7,56 +7,51 @@ description: Use during the Malaysia Testing Cup 2026 competition to execute str
 
 This skill governs the end-to-end evaluation, testing execution, and deliverable production for Team NERV in the Malaysia Testing Cup.
 
-## 1. Architectural Roles
-- **Omar (Field Operator):** Operates Chromium, inspects visual UI behaviors, triggers Satty (`Mod+Shift+S`) for visual defect capture, and pastes submissions into the MSTB portal.
-- **Antigravity (QA Lead & Driver):** Enforces the 3-hour schedule, analyzes API responses and architecture, generates test data, drafts ISTQB deliverables, and writes high-fidelity defect reports.
+## 1. Architectural Roles & Multi-Agent Swarm
+- **Omar (Field Operator):** Operates Chromium, inspects visual UI behaviors, analyzes DevTools Network payloads, triggers Satty (`Mod+Shift+S`) for defect screenshots, and submits deliverables into the MSTB portal.
+- **Antigravity (Mission Control / QA Lead):** Drives the master 3.5-hour clock, oversees the 130-point matrix, coordinates background subagents, performs final deliverable quality control, and ensures zero hallucinations.
+- **Subagents (`invoke_subagent`):**
+  - **`recon_scout` (Agent Alpha):** Runs `scripts/battle_runner.py`, extracts DOM inputs, Axe-core WCAG violations, and writes Deliverable 5 (Non-Functional Report).
+  - **`matrix_architect` (Agent Bravo):** Ingests DOM architecture, designs EP/BVA matrices, drafts Deliverable 1 (Test Plan), Deliverable 2 (Test Design), and Deliverable 3 (Test Cases).
+  - **`offensive_hunter` (Agent Charlie):** Applies `Claude-Red` attack playbooks (business logic, IDOR, JWT, race conditions), generates boundary fuzz vectors, structures Deliverable 4 Bug Reports, and isolates the Bonus 2 Golden Bug.
 
-## 2. Phase-by-Phase Workflow
+## 2. Phase-by-Phase Battle Workflow
 
-### Phase 1: Reconnaissance & Test Plan (00:00 - 00:20)
-1. Receive target URL from Omar.
-2. Run automated crawler and security probe:
+### Phase 1: Reconnaissance & Multi-Agent Launch (00:00 - 00:20)
+1. Omar provides target URL to Mission Control.
+2. Mission Control invokes `recon_scout` and runs automated parallel recon:
    ```bash
-   node scripts/crawler.js "<URL>"
-   python3 scripts/security_probe.py "<URL>"
+   python3 scripts/battle_runner.py "<URL>"
    ```
-3. Identify core modules, tech stack (via Wappalyzer / server headers), and risk profile.
-4. Populate `deliverables/01_test_plan.md` using the ISO 29119-3 template from `TOOLKIT.md`.
-5. Instruct Omar to submit Deliverable 1 into the platform.
+3. Recon artifacts saved to `evidence/recon_summary.json`.
+4. Mission Control dispatches `matrix_architect` to draft Deliverable 1 (`deliverables/01_test_plan.md`).
+5. Mission Control prompts Omar to verify and submit Deliverable 1.
 
-### Phase 2: Analysis & Design (00:20 - 00:45)
-1. Map test conditions per module (Equivalence Partitioning, Boundary Value Analysis, State Transitions).
-2. Populate `deliverables/02_test_analysis_design.md`.
-3. Instruct Omar to submit Deliverable 2 into the platform.
+### Phase 2: Analysis & Design Matrix (00:20 - 00:45)
+1. `matrix_architect` builds Equivalence Partitions, Boundary Values, and State Transition models.
+2. Populates `deliverables/02_test_analysis_design.md`.
+3. Omar submits Deliverable 2 into the platform.
 
-### Phase 3: Implementation (00:45 - 01:05)
-1. Convert conditions into structured test cases with preconditions, test data, and expected outcomes.
-2. Populate `deliverables/03_test_implementation.md`.
-3. Instruct Omar to submit Deliverable 3 into the platform.
+### Phase 3: Test Implementation (00:45 - 01:05)
+1. `matrix_architect` details formal test cases with exact inputs, preconditions, and expected outcomes.
+2. Populates `deliverables/03_test_implementation.md`.
+3. Omar submits Deliverable 3 into the platform.
 
-### Phase 4 & 5: Deep Testing & Non-Functional Audit (01:05 - 02:15)
-1. **Functional Defect Hunting:**
-   - Test boundary limits using `python3 scripts/fuzz_gen.py --type bva --len <N> --copy`.
-   - Test race conditions (rapid double click, concurrent checkout).
-   - Format each verified bug into `deliverables/04_bug_reports/DEF-00X.md`.
-2. **Non-Functional Testing (20 Points):**
-   - Run automated accessibility scan:
-     ```bash
-     node scripts/audit_accessibility.js "<URL>"
-     ```
-   - Check security headers, CORS reflection, cookie flags, and sensitive routes:
-     ```bash
-     python3 scripts/security_probe.py "<URL>" --recon
-     ```
-   - Populate `deliverables/05_non_functional_report.md`.
+### Phase 4 & 5: Deep Testing, Non-Functional Audit & Golden Bug Hunt (01:05 - 02:15)
+1. **Parallel Execution:**
+   - **Omar:** Executes manual interactive workflows in Chromium, intercepts network calls, flags weird behavior.
+   - **`recon_scout`:** Finalizes `deliverables/05_non_functional_report.md` (WCAG violations, security headers, CORS, performance TTFB/LCP).
+   - **`offensive_hunter`:** Tests high-severity logic boundaries using `python3 scripts/fuzz_gen.py --type bva --len <N> --copy`, checks JWT signature stripping, and probes for IDOR/race conditions.
+2. Verified defects are documented in `deliverables/04_bug_reports/DEF-00X.md` with reproduction steps, payloads, and Satty screenshots.
+3. Omar submits Deliverable 4 and Deliverable 5.
 
 ### Phase 6: Executive Summary Test Report (02:15 - 02:45)
-1. Synthesize all logged defects by severity (Blocker, Critical, Major, Minor).
-2. Establish module risk heatmap.
-3. Formulate objective stakeholder release recommendation (Go / No-Go).
-4. Populate `deliverables/06_summary_test_report.md`.
-5. Instruct Omar to submit Deliverable 6.
+1. Mission Control synthesizes defect counts, severity metrics, and risk heatmaps.
+2. Formulates objective stakeholder release recommendation (Go / No-Go).
+3. Populates `deliverables/06_summary_test_report.md`.
+4. Omar submits Deliverable 6.
 
 ### Buffer & Final Verification (02:45 - 03:00)
-1. Verify all attachments are PNG/JPG (<16 MB, no video/zip).
-2. Ensure no drafts remain unsubmitted on the platform.
+1. Verify all image attachments are valid PNG/JPG format under 16 MB.
+2. Verify all 6 deliverables plus Bonus sections are submitted on the MSTB portal.
+
