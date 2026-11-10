@@ -269,16 +269,44 @@ During the 3-hour intensive testing window, Team NERV conducted comprehensive fu
 
 ---
 
-## 🧰 Automated CLI Testing Suite (`Competitions/scripts/`)
+## 🧰 Automated CLI Testing Suite (`scripts/`)
 
 These surgical, high-speed CLI tools are pre-configured to run against any SUT URL during the live window:
 
 | Script | Purpose | Command Syntax |
 |---|---|---|
-| **SUT Crawler & Console Sniffer** | Captures DOM forms, buttons, inputs, unhandled JS errors, failed HTTP 4xx/5xx requests, and full-page screenshot. | `node Competitions/scripts/crawler.js "<URL>"` |
-| **WCAG 2.1 AA Accessibility Engine** | Full Axe-core audit listing broken WCAG rules, exact HTML selectors, impact level, and fixes for Deliverable 5 (20 pts). | `node Competitions/scripts/audit_accessibility.js "<URL>"` |
-| **HTTP Security & CORS Prober** | Audits CSP, Clickjacking, HSTS, MIME headers, CORS wildcard reflection, and cookie `HttpOnly`/`Secure` flags. | `python3 Competitions/scripts/security_probe.py "<URL>"` |
-| **Sensitive Route Recon** | Probes non-destructively for exposed Swagger/OpenAPI docs, `.env`, `.git`, Actuator endpoints, and `/admin` routes. | `python3 Competitions/scripts/security_probe.py "<URL>" --recon` |
-| **JWT Token Inspector & Forger** | Decodes JWT claims, checks for missing expiration, and generates a forged `alg: none` bypass token. | `python3 Competitions/scripts/security_probe.py --jwt "<TOKEN>"` |
-| **Fuzz & Test Data Generator** | Instant BVA strings, XSS payloads, SQLi, Unicode edge cases, with auto-copy to Wayland clipboard (`wl-copy`). | `python3 Competitions/scripts/fuzz_gen.py --type <type> --len <N> --copy` |
+| **SUT Crawler & Console Sniffer** | Captures DOM forms, buttons, inputs, unhandled JS errors, failed HTTP 4xx/5xx requests, and full-page screenshot. | `node scripts/crawler.js "<URL>"` |
+| **WCAG 2.1 AA Accessibility Engine** | Full Axe-core audit listing broken WCAG rules, exact HTML selectors, impact level, and fixes for Deliverable 5 (20 pts). | `node scripts/audit_accessibility.js "<URL>"` |
+| **HTTP Security & CORS Prober** | Audits CSP, Clickjacking, HSTS, MIME headers, CORS wildcard reflection, and cookie `HttpOnly`/`Secure` flags. | `python3 scripts/security_probe.py "<URL>"` |
+| **Sensitive Route Recon** | Probes non-destructively for exposed Swagger/OpenAPI docs, `.env`, `.git`, Actuator endpoints, and `/admin` routes. | `python3 scripts/security_probe.py "<URL>" --recon` |
+| **JWT Token Inspector & Forger** | Decodes JWT claims, checks for missing expiration, and generates a forged `alg: none` bypass token. | `python3 scripts/security_probe.py --jwt "<TOKEN>"` |
+| **Fuzz & Test Data Generator** | Instant BVA strings, XSS payloads, SQLi, Unicode edge cases, with auto-copy to Wayland clipboard (`wl-copy`). | `python3 scripts/fuzz_gen.py --type <type> --len <N> --copy` |
+
+---
+
+## ⚔️ Curated Offensive Security Skills Arsenal (`.agents/skills/`)
+
+The workspace includes 16 specialized, battle-tested offensive skills ported from `Claude-Red` to maximize scoring on Deliverable 4 (Defects), Deliverable 5 (Non-Functional Testing), and Bonus 2 (Golden Bug):
+
+| Skill Name | Target Deliverable | Core Attack Surface & Methodology |
+|---|:---:|---|
+| **`offensive-business-logic`** | Bonus 2 / Del 4 | State machine violations, step skipping, price/quantity manipulation, coupon stacking, negative values. |
+| **`offensive-idor`** | Bonus 2 / Del 4 | Horizontal/vertical privilege escalation, predictable ID/GUID swapping, unauthenticated object access. |
+| **`offensive-race-condition`** | Bonus 2 / Del 4 | Concurrency window testing, limit bypass, double redemption, single-packet synchronization. |
+| **`offensive-parameter-pollution`** | Del 4 / Del 5 | HTTP parameter pollution (HPP), array/object tampering, query string vs JSON body desynchronization. |
+| **`offensive-jwt`** | Del 5 / Bonus 2 | `alg: none` signature stripping, weak HMAC cracking, claim manipulation (`sub`, `role`, `admin`). |
+| **`offensive-oauth`** | Del 5 / Bonus 2 | Redirect URI manipulation, missing state parameter (CSRF), token leakage in referrer headers. |
+| **`offensive-api-security`** | Del 5 / Del 4 | OWASP API Top 10: BOLA, BFLA, mass assignment, unhandled verbs, content-type switching. |
+| **`offensive-api-abuse`** | Del 5 / Del 4 | API call chaining, pagination abuse for bulk exfiltration, GraphQL batching and introspection. |
+| **`offensive-graphql`** | Del 5 / Bonus 2 | Introspection querying, alias batching, query depth DOS, hidden mutation discovery. |
+| **`offensive-file-upload`** | Del 5 / Del 4 | Double extension bypass, Content-Type spoofing, magic bytes manipulation, SVG stored XSS. |
+| **`offensive-sqli`** | Del 5 | Error-based, boolean-blind, time-based SQL injection, sleep payloads, ORM CVE patterns. |
+| **`offensive-xss`** | Del 5 | Stored, reflected, DOM XSS, attribute breakout, markdown/rich-text rendering bugs. |
+| **`offensive-ssrf`** | Del 5 | Cloud metadata access (`169.254.169.254`), localhost internal pivots, open redirect chaining. |
+| **`offensive-ai-security`** | Bonus 2 / Del 5 | Prompt injection, system prompt extraction, indirect RAG poisoning, excessive agency testing. |
+| **`offensive-fast-checking`** | Del 1 / Del 4 | Speed-optimized 10-minute smoke test checklist for rapid attack surface mapping and quick wins. |
+| **`offensive-reporting`** | Del 4 / Del 6 | Professional defect documentation, CVSS 3.1 scoring, business impact articulation, reproducible PoCs. |
+
+> Complete offline repository of all 79 offensive skills across Cloud, Wireless, Mobile, and Reverse Engineering is archived in `references/claude-red/` (see `references/claude-red/INDEX.md`).
+
 

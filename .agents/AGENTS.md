@@ -48,3 +48,12 @@ The competition evaluates a 130-point matrix across 6 core deliverables and 2 bo
 - `python3 scripts/security_probe.py "<URL>" --recon`: Discovers sensitive exposed endpoints (Swagger, .env, Actuator).
 - `python3 scripts/security_probe.py --jwt "<TOKEN>"`: Decodes JWT claims and creates `alg: none` forged test vectors.
 - `python3 scripts/fuzz_gen.py --type <type> --len <N> --copy`: Generates boundary inputs and pipes to `wl-copy`.
+
+---
+
+## ⚔️ 5. Curated Offensive Skills Arsenal (`.agents/skills/`)
+- **Deliverable 4 & Bonus 2 (Golden Bugs):** `offensive-business-logic`, `offensive-idor`, `offensive-race-condition`, `offensive-parameter-pollution`.
+- **Deliverable 5 (Non-Functional Testing):** `offensive-api-security`, `offensive-api-abuse`, `offensive-jwt`, `offensive-oauth`, `offensive-graphql`, `offensive-file-upload`, `offensive-sqli`, `offensive-xss`, `offensive-ssrf`, `offensive-ai-security`.
+- **Speed & Reporting Multipliers:** `offensive-fast-checking` (10-minute smoke triage), `offensive-reporting` (CVSS 3.1 & reproduction logs).
+- **Master Offline Archive (79 Skills):** Full repository indexed at `references/claude-red/INDEX.md`.
+
