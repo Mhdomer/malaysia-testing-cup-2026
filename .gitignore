@@ -1,0 +1,19 @@
+# Node dependencies
+scripts/node_modules/
+scripts/package-lock.json
+
+# Temporary screenshots & raw test evidence
+evidence/*.png
+evidence/*.jpg
+evidence/*.jpeg
+evidence/*.webp
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
