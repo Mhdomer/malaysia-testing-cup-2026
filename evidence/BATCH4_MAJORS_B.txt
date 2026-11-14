@@ -1,0 +1,128 @@
+
+
+# DEF-008: Stall Closure Refusal Undercounts Open Tickets by Excluding Ready Tickets
+
+- **Summary \*:** Stall Closure Refusal Undercounts Open Tickets by Excluding Ready Tickets (MEJ-STL-04)
+- **Device Type:** Desktop | **OS Version:** CachyOS Linux | **Browser Type:** Chrome
+- **Priority \*:** Medium
+- **Severity \*:** Major
+- **Area of Impact \*:** Dapur / Kitchen Display & Stall Closure
+- **Frequency \*:** Always
+- **Product Risk \*:** Medium
+- **Issue Type \*:** Functional
+
+---
+
+## Description \*
+When attempting to close a stall via `"Close for today"`, the refusal message undercounts the number of open tickets because it excludes tickets in the `Ready` state from the open ticket calculation, violating `MEJ-STL-04`.
+
+Per `MEJ-STL-04`, open tickets include all tickets in `New`, `Cooking`, and `Ready` states. On Stall 1 (`Kopi & Teh Pak Zainal`), when 5 open tickets are present (`2 New` + `2 Cooking` + `1 Ready`), the closure refusal message reports only `4 open tickets`, omitting the `Ready` ticket from the count.
+
+## Steps to Reproduce \*
+1. Log in to MejaMarmar Dapur and open Stall 1 (`Kopi & Teh Pak Zainal`) Kitchen Display at `/sut/mejamarmar/dapur/kitchen/1`.
+2. Ensure the stall has 5 open tickets distributed across all three active states: `2 New`, `2 Cooking`, and `1 Ready`.
+3. Click `"Close for today"`.
+4. Read the refusal message displayed by the system.
+
+## Expected Result \*
+Per `MEJ-STL-04`, `"Close for today"` must be refused while the stall has any open ticket (`New`, `Cooking`, or `Ready`) with the accurate total count: `"Kopi & Teh Pak Zainal still has 5 open tickets. Serve them before closing."`.
+
+## Actual Result \*
+With 5 open tickets on Stall 1 (`2 New` + `2 Cooking` + `1 Ready`), clicking `"Close for today"` displays `"Kopi & Teh Pak Zainal still has 4 open tickets. Serve them before closing."`, excluding `Ready` tickets from the open ticket count.
+
+## Additional Information
+- **Spec Reference:** `MEJ-STL-04`
+- **Observed Target:** `/sut/mejamarmar/dapur/kitchen/1` (`Kopi & Teh Pak Zainal`)
+- **Risk Note:** If `Ready` tickets are excluded from the open ticket check altogether, a stall with only `Ready` tickets (and `0 New` / `0 Cooking`) may be permitted to close while paid orders are still waiting for handover.
+============================================================
+
+# DEF-009: Diner Pages Fixed at 1000px Width Cause Severe Overflow and Off-Screen CTAs at 375px Mobile Viewport
+
+## WBT Form Fields
+
+- **Summary \*:** Diner pages fixed at 1000px width overflow 375px mobile viewport, pushing Tray total and Send tray CTA off-screen
+- **Area of Impact \*:** Diner UI / Responsive Layout (MEJ-SEC-07)
+- **Issue Type \*:** UI
+- **Severity \*:** Major
+- **Priority \*:** High
+- **Frequency \*:** Always
+- **Product Risk \*:** Medium
+- **Device Type:** Desktop (375px Mobile Viewport)
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+Per MEJ-SEC-07 ("Laptop first"), the diner pages must stay usable at a 375 px mobile viewport width. However, the main layout container on both Home (`/sut/mejamarmar/`) and My Tray (`/sut/mejamarmar/tray`) is locked to a fixed width of 1000 px (`mainBox` = 1000 px). At a 375 px viewport width, 625 px of content overflows horizontally off the right edge, and the primary "Tray total" card and "Go to Send tray" call-to-action button are positioned at `x = 530 px` (width 426 px), completely off-screen without horizontal scrolling.
+
+---
+
+### Steps to Reproduce \*
+1. Open Chrome DevTools and set the viewport width to `375 px` (mobile device emulation, e.g. 375x667).
+2. Navigate to `https://www.worldbesttester.com/sut/mejamarmar/` and observe horizontal scrolling.
+3. Sign in as a diner (e.g., `nuraisyah.rahman@example.com` / `marmar2026`), add a dish to the tray, and navigate to `https://www.worldbesttester.com/sut/mejamarmar/tray`.
+4. Observe the horizontal overflow and the location of the "Tray total" panel and "Go to Send tray" button.
+
+---
+
+### Expected Result \*
+Per MEJ-SEC-07, diner pages should reflow cleanly and remain usable at 375 px viewport width, with primary controls ("Tray total" and "Go to Send tray") visible and reachable without severe horizontal overflow.
+
+---
+
+### Actual Result \*
+Both Home and My Tray render with a fixed 1000 px container width (`625 px` horizontal overflow at 375 px). On `/sut/mejamarmar/tray`, the "Tray total" summary card and "Go to Send tray" CTA button sit at `x = 530 px` (426 px wide), completely off-screen on a 375 px mobile viewport.
+
+---
+
+### Additional Information
+- **Specification Reference:** MEJ-FRS-001 v1.0, Section 15 (MEJ-SEC-07: "the diner pages stay usable at 375 px").
+- **Affected URLs:** `https://www.worldbesttester.com/sut/mejamarmar/` and `https://www.worldbesttester.com/sut/mejamarmar/tray`.
+============================================================
+
+# DEF-014: Missing Single-Click "Tapau" and "Dine in" Buttons on Tray Lines (`MEJ-SEC-05`, `MEJ-TRY-03`)
+
+## WBT Form Fields
+
+- **Summary \*:** Missing single-click "Tapau" and "Dine in" buttons on tray lines (MEJ-SEC-05, MEJ-TRY-03)
+- **Area of Impact \*:** Diner My Tray / Accessibility & Pointer Controls (MEJ-SEC-05)
+- **Issue Type \*:** UI
+- **Severity \*:** Major
+- **Priority \*:** Medium
+- **Frequency \*:** Always
+- **Product Risk \*:** Medium
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+On the `My tray` page (`/sut/mejamarmar/tray`), dish lines can be switched between `Dine in` and `Tapau` only via drag-and-drop or keyboard `Space` pickup/drop. The single-click `"Tapau"` and `"Dine in"` buttons required by the specification are missing from the dish lines.
+
+Per `MEJ-TRY-03` and `MEJ-SEC-05`, everything done by dragging on `/sut/mejamarmar/tray` must also be doable with a single click via the line's `"Tapau"` and `"Dine in"` buttons (consistent with WCAG 2.2 SC 2.5.7 Dragging Movements).
+
+---
+
+### Steps to Reproduce \*
+1. Sign in to Meja Marmar (`/sut/mejamarmar/sign-in`) as a diner.
+2. Add at least one dish to `My tray` from `/sut/mejamarmar/stalls`.
+3. Navigate to `/sut/mejamarmar/tray`.
+4. Inspect the controls rendered on each dish line for single-click `"Tapau"` and `"Dine in"` buttons.
+
+---
+
+### Expected Result \*
+Per `MEJ-TRY-03` and `MEJ-SEC-05`, each dish line on `/sut/mejamarmar/tray` provides single-click `"Tapau"` and `"Dine in"` buttons so users who cannot perform dragging movements can move items between sections with a single pointer click.
+
+---
+
+### Actual Result \*
+Only drag-and-drop and keyboard `Space` pickup/drop interactions exist on `/sut/mejamarmar/tray`. The single-click `"Tapau"` and `"Dine in"` buttons are absent from dish lines.
+
+---
+
+### Additional Information
+- **Specification References:** `MEJ-TRY-03`, `MEJ-SEC-05` (Single-pointer alternative to dragging movements).
+- **Affected URL:** `https://www.worldbesttester.com/sut/mejamarmar/tray`

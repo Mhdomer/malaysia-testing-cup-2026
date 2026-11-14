@@ -1,0 +1,1466 @@
+Meja Marmar
+MEDAN SELERA MEJA MARMAR
+
+One table, ten stalls, one tray.
+
+Functional Requirements Specification
+MEJ-FRS-001 · Version 1.0 · Approved · 6 October 2026
+Meja Marmar, the ordering app for diners, and Dapur, the centre's staff console.
+
+SPEC
+
+MEJ-FRS-001
+
+Medan Selera Meja Marmar, run by Marmar Selera Sdn. Bhd.
+8 Lorong Meja Bulat, 55100 Kuala Lumpur · 03-9915 1520
+Meja Marmar is a demonstration application used for software-testing practice.
+No real food court, no real account and no real money is involved.
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+Version 1.0 · Status: Approved · 6 October 2026
+Medan Selera Meja Marmar, run by Marmar Selera Sdn. Bhd. · 8 Lorong Meja Bulat, 55100 Kuala Lumpur ·
+03-9915 1520
+
+1. Introduction
+Scope. Meja Marmar is the ordering app of Medan Selera Meja Marmar, a food court of ten stalls. Diners build one
+tray from several stalls, pay once and follow each stall's queue number on the board; Dapur ("kitchen") is the staff
+console. Diners sign in with an email address, staff with a login, each with a password. Nothing is ever sent to anyone:
+a new password is shown on screen in Dapur, a pay code on the tray's page. The centre's own rules below are the
+authority.
+Language. British English. Malay names keep their own spelling and are explained in Annex D.
+Money. Malaysian ringgit, written "RM2.80": "RM" before the figure, two decimals, a comma for thousands, a hyphen
+before a negative ("-RM0.02"). Figures are worked out on the server in sen, and a rule that rounds rounds half-up to
+the sen unless it says otherwise. Only a cash amount is rounded to 5 sen (MEJ-PAY-02).
+Typed amounts. Digits, optionally with commas between groups of three digits and a point before one or two
+decimals: "15", "15.2", "15.20", "1,250" and "1,250.00" are accepted. Anything else is refused with "Type an amount in
+ringgit, such as 15.20 or 1,250.00." and nothing is saved: a comma not followed by exactly three digits ("15,20",
+"1,5"), a point followed by three digits ("1.250"), groups of the wrong size ("1,25,000"), both marks the continental
+way ("1.250,00"), more than two decimals, spaces inside the number, signs, letters and currency symbols ("RM15").
+An empty amount field says "Enter an amount."
+Counting words. Every count is written with its own singular or plural: "1 open ticket", "2 open tickets", "1 cup", "1
+tray".
+Limits and times. "From X to Y" and "X to Y" include X and Y. "At least X", "at most X" and "up to X" include X. "More
+than X", "fewer than X", "above X" and "below X" exclude X. A time of day is judged to the minute on the clock (2.29
+pm lasts from 2.29.00 to 2.29.59). "From" a time includes that minute, "before" a time excludes it, and a window
+from one time to another includes its first and its last minute. Times read 7.00 am, 12.00 pm (noon), 12.00 am
+(midnight).
+Whose clock. Every date and time is Malaysian time (Asia/Kuala_Lumpur, UTC+8, no summer time). "Today" is the
+date in Kuala Lumpur and changes at midnight. No rule counts working days; public holidays change nothing.
+Personas. A diner, and three roles in Dapur: Cook (of one stall), Cashier and Manager, who can do every staff step.
+Testing in the app's own tab. For the address bar, Reload, Back or a second tab, open Meja Marmar in its own tab
+with Open in New Tab.
+Three hours. A suggested route: the diner side, then Dapur as the manager, then both together (refunds, states, the
+board, limits, the address bar).
+One database per team (Annex E).
+
+2. A tray from start to finish: a worked example
+Suhana sits at table 105 (Dewan Sejuk, Table service) at 3.20 pm, inside the 3.00 to 4.59 pm teh tarik hour, and
+sends one tray, numbered T-1187:
+
+• Kopi & Teh Pak Zainal: 3 x Teh tarik on one line, Dine in; 1 x Coklat ais, Tapau. Two cups get RM1.50 and the third
+keeps its RM2.80. Items 1.50 + 1.50 + 2.80 + 3.80 = RM9.60; containers RM0.30; service charge 10 % of the
+dine-in RM5.80 = RM0.58; service tax 6 % of RM10.48 = 0.6288, RM0.63; section RM11.11.
+
+• Nasi Lemak Kuali Tembaga: 1 x Nasi lemak rendang daging, Dine in (RM11.00); 1 x Nasi lemak biasa, Tapau
+(RM4.50). Items RM15.50; containers RM0.30; service charge 10 % of RM11.00 = RM1.10; service tax 6 % of
+RM16.90 = 1.014, RM1.01; section RM17.91.
+
+Meja Marmar · Functional Requirements Specification
+
+Page 1
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+• Cendol & ABC Pak Latiff: 1 x ABC (ais kacang), Dine in. Items RM6.00; service charge RM0.60; service tax 6 % of
+RM6.60 = 0.396, RM0.40; section RM7.00.
+
+• Tray total RM36.02. From the balance: RM36.02. In cash: RM36.02 ends in 2, so the amount to pay is RM36.00,
+"Rounding -RM0.02", and the tray page says "Pay RM36.00 at the cashier with code 8424." Paid with RM50.00:
+change RM14.00.
+
+• Three tickets, one at each stall with its own next queue number; at a Table service table each reads "Ready: on its
+way to table 105" when it is Ready.
+
+3. The centre (MEJ-CTR)
+MEJ-CTR-01
+
+Halls and tables. Tables are numbered 1 to 120, each in one hall: Self-collect, where diners collect
+their food at the stall, or Table service, where runners bring each Ready ticket to the table. The hall
+decides the service charge (MEJ-TOT-03) and how Ready food arrives (MEJ-TKT-06). My tray and
+the tray page name the table with its hall and place note: "Table <number> · <hall>" or "Table
+<number> · <hall>, <note>".
+
+MEJ-CTR-02
+
+Out of service. A table is In use or Out of service. An out-of-service table cannot be chosen:
+"Table <number> is out of service. Please choose another table."
+
+MEJ-CTR-03
+
+Choosing a table. On My tray the diner types a number in "Table" and presses Use this table: a
+whole number from 1 to 120 ("Please enter a table number from 1 to 120."), of a table that exists
+("There is no table <number>. Please choose another table.") and is In use (MEJ-CTR-02). The
+figures then follow that table's hall.
+
+MEJ-CTR-04
+
+Open trays on a table. A table holds at most 6 open trays, an open tray being one Awaiting
+payment, or Paid and not yet Complete (MEJ-TKT-04). Sending to a table that already has 6 is
+refused: "Table <number> already has 6 open trays. Please choose another table." Draft,
+Complete and Cancelled trays never count.
+
+MEJ-CTR-05
+
+Hours and last orders. The centre opens and closes at times set in Dapur, and each stall at its own
+times inside them (MEJ-DAP-02). A stall takes orders from its opening time and before its last
+orders, 30 minutes before its closing time. Before its opening time a tray holding its dishes cannot
+be sent: "<stall> opens at <time>."; from its last orders until midnight, its closing time included:
+"Last orders at <stall> were at <time>." Its tile, page and board column say one of: "Opens at
+<time>" (before opening), "Open now · last orders <time>" (from opening and before last orders),
+"Last orders were at <time>" (from last orders and before closing), "Closed · still serving <n>" (from
+closing, while it has open tickets), "Closed · opens at <time> tomorrow" (from closing, with no
+open ticket), and "Closed today" (MEJ-STL-04), which outranks the others; "Busy" (MEJ-STL-05)
+replaces "Open now" while it holds.
+
+MEJ-CTR-06
+
+When the rules are judged. Stall hours, last orders, Closed today, Busy and teh tarik hours are
+judged when the tray is sent, to the minute. A cash tray keeps the prices it was sent with; at Take
+payment its stalls' hours, last orders, Closed today and Busy are checked again (MEJ-PAY-04), its
+teh tarik hour prices are not.
+
+Meja Marmar · Functional Requirements Specification
+
+Page 2
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+4. Stalls and menus (MEJ-STL)
+MEJ-STL-01
+
+Stalls and their halal label. A stall has a number, a name, a cuisine, a description of up to 200
+characters, a hand-painted signboard (a pair of colours), opening and closing times, a bundled
+photograph and one halal label, set by the manager: "Halal certified" or "No halal certificate",
+shown in words on the stall's tile, its page and its section of a tray. The label is words only (no logo,
+seal, coloured badge or authority), belongs to the stall, never a dish, and is Meja Marmar's only
+religious or dietary claim.
+
+MEJ-STL-02
+
+Dishes. A dish has a name of 2 to 60 characters, a stall, a price from RM0.50 to RM99.90 in steps of
+10 sen, a description of up to 120 characters, a bundled photograph, a Teh tarik hour mark
+(MEJ-TEH-02) and is Active or Inactive. An inactive dish is not listed and cannot be added: "<dish>
+is no longer available." A tray line of an inactive dish shows "No longer available", and the tray
+cannot be sent until it is removed: "<dish> is no longer available. Please remove it from your tray."
+
+MEJ-STL-03
+
+Sold out today. On the kitchen display the stall's cook or the manager presses Mark sold out on a
+dish, and Mark available to undo it. A sold-out dish says "Sold out" in words on the stall's page and
+cannot be added: "<dish> is sold out today."; a tray line of it shows "Sold out today", and the tray
+cannot be sent until it is removed: "<dish> is sold out today. Please remove it from your tray."
+Marking a ticket line sold out (MEJ-REF-01) also marks its dish sold out. Midnight does not lift the
+mark.
+
+MEJ-STL-04
+
+Close for today. The stall's cook or the manager may Close for today. It is refused while the stall
+has any open ticket (New, Cooking or Ready): "<stall> still has <open_tickets>. Serve them before
+closing." (for example "2 open tickets"). A stall closed today says "Closed today"; its dishes cannot
+be added ("<stall> is closed today."), and a tray holding them cannot be sent: "<stall> is closed
+today. Please remove its dishes." Reopen for today undoes it. At midnight a closed stall is open
+again from its opening time.
+
+MEJ-STL-05
+
+Busy. A stall with 15 or more open tickets (New, Cooking or Ready) is Busy: its tile, page and board
+column say "Busy". Its dishes can still be put on a tray, but a tray holding them can be neither sent
+nor paid at the cashier while it is Busy: "<stall> is busy with <n> orders. Please try again in a few
+minutes."
+
+MEJ-STL-06
+
+Listing. Stalls are listed in number order; each tile shows the signboard, the cuisine, the halal label
+and the state in words (MEJ-CTR-05). A stall that is inactive in Dapur is not listed, and its dishes
+cannot be added: "<stall> is not taking orders." The diner side offers no search and no filters.
+
+5. The tray (MEJ-TRY)
+MEJ-TRY-01
+
+One tray, lines and quantities. A diner builds one tray at a time, a Draft. Dishes are added on a
+stall's page with a "Quantity" from 1 to 9 ("Choose a quantity from 1 to 9."), Dine in (chosen at first) or
+Tapau, and Add to tray: "<dish> is on your tray." Adding a dish already on the tray with the same
+choice adds to its line. A quantity above 9, or a line passing 9 of its dish, gets "You can have at most
+9 of one dish on a line." A signed-out visitor sees the prices and Sign in to order.
+
+MEJ-TRY-02
+
+Five stalls. A tray holds dishes from at most 5 stalls. Adding a dish from a further stall is refused: "A
+tray can hold dishes from up to 5 stalls. Send this tray first, then start another."
+
+Meja Marmar · Functional Requirements Specification
+
+Page 3
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+MEJ-TRY-03
+
+Dine in and Tapau. Every line is Dine in or Tapau. On My tray a line moves between the marble table
+and the tapau bag by dragging its dish, by the keyboard (Space picks it up, Space on the bag or
+table drops it) or with the line's Tapau or Dine in button. Moving a line onto a line of the same dish
+with the other choice merges the two, keeping a note either carries. A move that would pass
+MEJ-TRY-01's limit of 9 is refused with that message, one joining two different notes with "The two
+lines of <dish> have different notes. Change or clear one of them first.", and nothing moves.
+
+MEJ-TRY-04
+
+Notes. A line may carry a note for the stall of up to 60 characters ("A note has at most 60
+characters."), typed in "Note for the stall" or picked from the suggestions "Less sweet", "Less
+spicy", "No vegetables" and "Extra ice", and saved with Save note. Any letters and symbols may be
+typed. It reaches the kitchen display, both tray pages and the receipt exactly as typed.
+
+MEJ-TRY-05
+
+My tray. My tray groups the lines by stall, in stall-number order, each a plate on the marble table,
+with each section's figures (MEJ-TOT) and the tray total. A Draft shows today's prices, and the teh
+tarik hour price during a teh tarik hour. A line's quantity changes with "Quantity" and Update (1 to 9);
+Remove takes a line off and Empty tray takes every line off, each after confirmation. An empty
+Draft says "Your tray is empty."
+
+MEJ-TRY-06
+
+Send tray. On Send tray the diner sees the tray, table and figures, chooses Pay from my balance
+or Pay cash at the cashier ("Please choose how you pay: from your balance or in cash at the
+cashier.") and presses Send tray. The checks run in this order, the first failure shown with nothing
+changed: the tray has a line ("Your tray is empty.") and a table ("Please choose a table on My tray
+first."); the table (MEJ-CTR-02, -03, -04); each stall's hours and last orders (MEJ-CTR-05), in stall
+order; Closed today (MEJ-STL-04); Busy (MEJ-STL-05); inactive or sold-out lines (MEJ-STL-02,
+-03); then a balance payment (MEJ-PAY-01).
+
+MEJ-TRY-07
+
+What sending fixes. Sending fixes the unit prices, which cups get the teh tarik hour price
+(MEJ-TEH-03), the table, its hall and service, and every figure; nothing changed later in Dapur alters
+a sent tray. A tray takes its number, "T-" and four digits, when first sent, the number after the
+highest so far, and keeps it if sent again (MEJ-PAY-05).
+
+6. Teh tarik hours (MEJ-TEH)
+MEJ-TEH-01
+
+The windows. Teh tarik hours are daily windows, each from a start minute to an end minute of one
+day, set in Dapur (Annex C). Home and the Kopi & Teh stall's page say "Teh tarik hour now, until
+<end>", "Next teh tarik hour at <start>" or "No more teh tarik hours today".
+
+MEJ-TEH-02
+
+The price. During a teh tarik hour, every dish marked Teh tarik hour costs RM1.50 instead of its
+menu price, dine in or tapau. Every other dish keeps its menu price.
+
+MEJ-TEH-03
+
+Two cups a tray. At most 2 cups on a tray get the teh tarik hour price. When the tray holds more
+marked cups, the 2 dearest by menu price get it; between cups of the same menu price, those on
+the line added to the tray first.
+
+MEJ-TEH-04
+
+Setting the windows. The manager adds, edits and deletes windows: whole minutes, the end after
+the start on the same day, each from 30 minutes to 3 hours long counting its first and last minute
+("A teh tarik hour lasts from 30 minutes to 3 hours."), no window overlapping another ("Teh tarik
+hours cannot overlap."), and at most 4 windows ("There can be at most 4 teh tarik hours.").
+
+Meja Marmar · Functional Requirements Specification
+
+Page 4
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+7. Totals (MEJ-TOT)
+Each stall's section of a tray (later its ticket) is priced on its own and shows "Items", "Containers", "Service charge",
+"Service tax" and "Section total", and the tray its "Tray total". The diner's pages leave out Containers or Service
+charge of RM0.00, but show Service charge at a Table service table.
+MEJ-TOT-01
+
+Items. Items is the sum over the section's lines of unit price times quantity, using the teh tarik hour
+price for the cups MEJ-TEH-02 and -03 give it.
+
+MEJ-TOT-02
+
+Containers. Containers is RM0.30 for every dish on a Tapau line; Dine-in lines use none.
+
+MEJ-TOT-03
+
+Service charge. Service charge is 10 % of the section's Dine-in Items, only when the tray's table
+stands in a hall with Table service; Tapau lines and containers never carry it. Rounded half-up to the
+sen.
+
+MEJ-TOT-04
+
+Service tax. Service tax is 6 % of (Items + Containers + Service charge), rounded half-up to the
+sen.
+
+MEJ-TOT-05
+
+Section and tray totals. A section total is Items + Containers + Service charge + Service tax; the
+tray total is the sum of the section totals. The browser only shows the figures.
+
+MEJ-TOT-06
+
+The same figures everywhere. The same figures appear on My tray, Send tray, the tray page, the
+receipt, Dapur's Take payment and Dapur's tray page.
+
+8. Paying (MEJ-PAY)
+MEJ-PAY-01
+
+Pay from my balance. Pay from my balance takes the tray total from the diner's balance, to the
+sen, at once, and the tray is Paid: "Tray <number> is paid. Watch your numbers on the board." It is
+refused when the balance is less than the tray total: "Your balance is <balance> and this tray is
+<total>. Top up at the cashier or pay cash." (for example "Your balance is RM5.60 and this tray is
+RM6.89. Top up at the cashier or pay cash."). A balance never goes below RM0.00.
+
+MEJ-PAY-02
+
+Cash and the 5-sen rounding. Pay cash at the cashier asks for the amount to pay: the tray total
+rounded to the nearest 5 sen. By the tray total's last digit of sen:
+
+Ends in
+
+Becomes
+
+0 or 5
+
+unchanged
+
+1 or 2
+
+rounded down to 0
+
+3 or 4
+
+rounded up to 5
+
+6 or 7
+
+rounded down to 5
+
+8 or 9
+
+rounded up to the next 10
+
+The tray shows the difference as "Rounding" with its sign ("Rounding -RM0.02"). Only a cash amount is rounded:
+never a balance payment, a line, a section or a refund.
+MEJ-PAY-03
+
+Awaiting payment. A cash tray becomes Awaiting payment with a four-digit pay code, unique
+among the trays awaiting payment, shown large on its page: "Pay <amount> at the cashier with
+code <code>." Its tickets are made only when the payment is taken.
+
+Meja Marmar · Functional Requirements Specification
+
+Page 5
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+MEJ-PAY-04
+
+Take payment. A cashier or the manager finds the tray on Payments, in its list or by "Pay code" and
+Find ("Enter the 4-digit pay code.", "No tray is awaiting payment with code <code>."). Take
+payment shows the lines, tray total, rounding and amount to pay of its latest sending. The cashier
+types "Cash received", at least the amount to pay and in steps of 5 sen ("Cash received must be at
+least <amount> and in steps of 5 sen."), and presses Take payment. The hours, last orders, Closed
+today and Busy of its stalls are checked again (MEJ-CTR-06); then the tray is Paid, its tickets are
+made, and the page says "Payment taken. Change <amount>."
+
+MEJ-PAY-05
+
+Edit tray and Cancel unpaid tray. While a tray is Awaiting payment, the diner may press Edit tray,
+after confirmation: it goes back to Draft ("Tray <number> is back on My tray. Send it again when it is
+ready."), its pay code stops working, and sending it again gives a new amount to pay and a new
+code. Edit tray is refused while the diner is building another tray: "Send or empty the tray you are
+building first." A cashier or the manager may press Cancel unpaid tray, after confirmation: the tray
+becomes Cancelled, which is final ("Tray <number> has been cancelled."). Neither is offered, nor
+accepted, once the tray is Paid: "Tray <number> is <state>: it can no longer be changed."
+
+MEJ-PAY-06
+
+Two ways to pay. The balance and cash at the cashier are the only ways to pay.
+
+9. Balance and top-ups (MEJ-BAL)
+MEJ-BAL-01
+
+The balance. Every diner has a Meja Marmar balance, starting at RM0.00: the sum of its
+movements (top-ups, payments and refunds). Balance shows it with the history, newest first: date,
+time, what, amount and the balance after.
+
+MEJ-BAL-02
+
+Top-ups. The diner pays the cashier in cash, and a cashier or the manager records the top-up in
+Dapur with "Amount" and Top up, in steps of RM10.00, from RM10.00 ("Top-ups are made in steps
+of RM10.00."): "<name> has been topped up by <amount>. The balance is now <balance>." The
+balance after a top-up may not be above RM500.00: "A balance can hold at most RM500.00. This
+diner can top up at most <amount>.", or, when not even RM10.00 fits, "A balance can hold at most
+RM500.00. This diner cannot top up now."
+
+MEJ-BAL-03
+
+Refunds. A refund is always credited to the balance, in full, whatever the tray was paid with and
+whatever the balance already holds.
+
+MEJ-BAL-04
+
+Nothing else moves a balance. Only top-ups, payments and refunds move a balance; it cannot be
+withdrawn, transferred or edited.
+
+10. Tickets and queue numbers (MEJ-TKT)
+MEJ-TKT-01
+
+Tickets and queue numbers. Paying a tray (from the balance at Send tray, or in cash at Take
+payment) makes one ticket per stall on it, with that stall's next queue number. Each stall counts
+001 to 999, and after 999 comes 001; queue numbers are always shown as three digits and do not
+start again each day.
+
+Meja Marmar · Functional Requirements Specification
+
+Page 6
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-TKT-02
+
+MEJ-FRS-001 Version 1.0
+
+Ticket states. A ticket moves only as this table says:
+
+From
+
+Action
+
+By
+
+To
+
+(payment)
+
+the tray is Paid
+
+New
+
+Start cooking
+
+the stall's cook, the manager
+
+Cooking
+
+Cooking
+
+Call number
+
+the stall's cook, the manager
+
+Ready
+
+Ready
+
+Hand over
+
+the stall's cook, the manager
+
+Collected
+
+New
+
+Cancel this ticket
+
+the diner
+
+Cancelled
+
+New or Cooking
+
+the last of its lines marked Sold out
+
+the stall's cook, the manager
+
+Refunded
+
+New
+
+Collected, Cancelled and Refunded are final. An action is offered only in its own state; asked for in another it is
+refused with the ticket and its state: "Ticket <number> is <state>: it cannot be started.", "Ticket <number> is
+<state>: it cannot be called." or "Ticket <number> is <state>: it cannot be handed over."
+MEJ-TKT-03
+
+One ticket at a time. Every action acts on one ticket only: the other tickets of the same tray keep
+their states, and one ticket's money never moves another's.
+
+MEJ-TKT-04
+
+Complete. A tray is Complete when every one of its tickets is Collected, Cancelled or Refunded;
+its page then says "Everything has been collected", or, when something was refunded, "Complete.
+Refunded: <refunds>." with each refund as "<stall> <amount>", and it stops counting on its table
+(MEJ-CTR-04). Until then a paid tray reads "Paid".
+
+MEJ-TKT-05
+
+The kitchen display. A stall's kitchen display shows its open tickets only, in three columns, New,
+Cooking and Ready, each oldest first (by time paid, then ticket): queue number, table, and each
+line with its quantity, dish, "Tapau" where it is and its note. A Cancelled or Refunded ticket leaves at
+once. The display also holds the stall's dishes with Mark sold out or Mark available, its message on
+the board (MEJ-BRD-05), the single-key shortcuts (MEJ-SEC-05), Close for today or Reopen for
+today, and Watch on the board.
+
+MEJ-TKT-06
+
+The diner's tray page. The diner's tray page shows each ticket's stall, queue number in split-flap
+digits and state in words: "Waiting for the stall" (New), "Cooking", "Ready: collect at stall
+<number>" (a Self-collect hall) or "Ready: on its way to table <number>" (a Table service hall),
+"Collected", "Cancelled, refunded <amount>" and "Sold out, refunded <amount>" (for example
+"Cancelled, refunded RM7.15").
+
+11. The board (MEJ-BRD)
+MEJ-BRD-01
+
+What the board shows. The board is public. It shows every stall's number, name, signboard and
+state in words (MEJ-CTR-05); for a stall open now, or past closing with open tickets, two rows:
+"Cooking" (its New and Cooking numbers) and "Ready" (its Ready numbers), every number, oldest
+first. A stall past its closing time shows "Closed · still serving <n>" with its numbers until they are
+handed over; a stall closed today shows "Closed today" and no numbers. The board shows no
+names, tables or amounts.
+
+MEJ-BRD-02
+
+Split-flap numbers, re-read. Numbers are split-flap digits. An open board re-reads its numbers
+every 20 seconds without reloading the page, and on Reload; re-reading changes nothing. Digits
+that changed since this browser's last view flip; on a browser's first view every flap settles once; a
+Kopi & Teh number that has just become Ready is greeted by a teh tarik poured from a raised jug.
+Each movement plays once, under five seconds. The board changes only when a ticket changes or
+a stall's hours pass.
+
+Meja Marmar · Functional Requirements Specification
+
+Page 7
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+MEJ-BRD-03
+
+Pause and reduced motion. Pause updates stops the re-reading and every movement until
+Resume updates is pressed; with the browser set to reduce motion, nothing flips, settles or pours,
+and the numbers change at once.
+
+MEJ-BRD-04
+
+Yours. A signed-in diner's own numbers are marked "Yours", in words and with an outline.
+
+MEJ-BRD-05
+
+Message on the board. The stall's cook or the manager may set a message on the board of up to
+60 characters ("A message has at most 60 characters.") from the kitchen display with "Message on
+the board" and Save message; it shows under the stall's name on the board and on its page; saving
+it empty clears it. Any letters and symbols may be typed.
+
+12. Sold out, cancellation and refunds (MEJ-REF)
+MEJ-REF-01
+
+Sold out on a line. The stall's cook or the manager presses Sold out on a ticket line on the kitchen
+display, and the manager also on Dapur's tray page, only while its ticket is New or Cooking; in
+another state it is not offered, and a request is refused: "Ticket <number> is <state>: nothing on it
+can be marked sold out."
+
+MEJ-REF-02
+
+The sold-out refund. A sold-out line is refunded in full, service charge and tax included: the
+section total before, less the section total again without the line, every other line at its sent price. It
+is credited to the balance (MEJ-BAL-03), and the line shows "Sold out, refunded <amount>" (for
+example "Sold out, refunded RM8.35"). When every line of a ticket is sold out, the ticket is
+Refunded.
+
+MEJ-REF-03
+
+Cancel this ticket. The diner may press Cancel this ticket while it is New, after confirmation; the
+refund is that ticket's section total. Once the stall has started it: "<stall> has started ticket
+<number>. It can no longer be cancelled."; once it is final: "Ticket <number> is <state>: it cannot be
+cancelled."
+
+MEJ-REF-04
+
+Exact figures. Refunds are worked out on the exact figures: the 5-sen rounding of a cash payment
+is never refunded or charged back.
+
+MEJ-REF-05
+
+Where refunds show. Every refund appears on the diner's Balance history, on the tray page and on
+Dapur's tray page, with its time and amount.
+
+13. Accounts (MEJ-ACC)
+MEJ-ACC-01
+
+Sign in. Diners sign in on Meja Marmar's Sign in with "Email" (whatever its capitals) and "Password";
+staff on Dapur's with "Login" and "Password". A refused sign-in says "The email or password is not
+right." or "The login or password is not right.", keeps the email or login typed and never the
+password. A visitor who opens a diner-only page, or presses Sign in to order, is sent to Sign in and
+afterwards returns there, only ever to a page of Meja Marmar itself (MEJ-SEC-06), otherwise to
+Home. Dapur lands on the role's first page (MEJ-DAP-01).
+
+Meja Marmar · Functional Requirements Specification
+
+Page 8
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+MEJ-ACC-02
+
+Create account. Create account asks for a "Full name" of 2 to 60 characters, of letters of any
+alphabet, spaces and the marks . ' - / @, so that names such as "Revathi a/p Nadarajan", "Zainab
+binti Osman", "Ismail @ Mail" and "Nor'ain Siew-Lan" are all accepted ("Please enter your name as it
+is written: letters, spaces and . ' - / @ only."); an "Email" (one "@", a "." after it, no spaces, at most 120
+characters: "Please enter an email address such as name@example.com."), unique whatever its
+capitals and stored in lower case ("An account with this email already exists. Please sign in."); a
+"Password" of at least 8 characters with a letter and a digit ("Choose a password of at least 8
+characters, with a letter and a digit.") and "Confirm password" ("The two passwords do not
+match."). The account is signed in at once, with a balance of RM0.00: "Welcome to Meja Marmar."
+
+MEJ-ACC-03
+
+My account and Change password. On My account the diner edits "Full name" and "Email" under
+the rules of MEJ-ACC-02 and presses Save ("Your details have been saved."). Change password
+asks for "Current password" ("That is not your current password."), a "New password" under
+MEJ-ACC-02's rule and "Confirm new password": "Your password has been changed." The old
+password stops working at once.
+
+MEJ-ACC-04
+
+Deactivated accounts and forgotten passwords. A deactivated diner or member of staff cannot
+sign in: "This account cannot sign in. Please ask at the cashier." (staff: "This account cannot sign in.
+Please ask the manager."), and a session already open stops working on its next click. The diner
+sign-in page says "Forgotten your password? Ask at the cashier: the manager sets a new one for
+you on screen." A manager's Reset password shows the new password once, on screen ("The new
+password for <name> is <password>. It is shown only this once."), and ends every session of that
+account.
+
+MEJ-ACC-05
+
+Two sign-ins in one browser. Each persona has its own sign-in and its own Sign out ("You have
+signed out."). One browser holds one diner and one member of staff at once; signing out of one
+leaves the other signed in, and signing in ends only that browser's earlier session of the same
+persona.
+
+14. Dapur (MEJ-DAP)
+MEJ-DAP-01
+
+Roles. Three staff roles, Manager, Cashier and Cook (each cook belongs to one stall), with exactly
+these pages and actions:
+
+Page or action
+
+Cook
+
+Cashier
+
+Manager
+
+The kitchen display and every action on it (MEJ-TKT-05)
+
+Yes, their own stall
+
+No
+
+Yes, every stall
+
+Payments, Take payment, Cancel unpaid tray
+
+No
+
+Yes
+
+Yes
+
+Top-ups
+
+No
+
+Yes
+
+Yes
+
+Trays (the list and a tray's page)
+
+No
+
+Yes, read only
+
+Yes, with Sold out on a line of
+a New or Cooking ticket
+
+Today
+
+No
+
+No
+
+Yes
+
+The centre (hours and halls), Stalls, Dishes, Teh tarik hours,
+Tables, Diners, Staff
+
+No
+
+No
+
+Yes
+
+Change my password, Sign out, Reset data
+
+Yes
+
+Yes
+
+Yes
+
+On signing in, and at Dapur's own address, a cook lands on their kitchen, a cashier on Payments, the manager on
+Today; menus show only what the role may open. Any other page or action answers, in words, "This page is for the
+centre manager." or "This page is for the cashier and the centre manager.", and a kitchen display of a stall not their
+own answers "This kitchen belongs to another stall."; nothing changes.
+
+Meja Marmar · Functional Requirements Specification
+
+Page 9
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+MEJ-DAP-02
+
+Stalls. The manager creates, edits ("Name" and "Cuisine" of 2 to 40 characters each: "A stall name
+has 2 to 40 characters.", "A cuisine has 2 to 40 characters."; "Description" of up to 200: "A
+description has at most 200 characters."; "Halal label"; "Opening time"; "Closing time";
+"Signboard colours"; "Photograph" from the bundled set; a choice outside the options offered:
+"Choose one of the options offered."), deactivates, reactivates and deletes stalls. Hours are
+whole minutes, inside the centre's hours and at least 1 hour long: "A stall opens and closes inside
+the centre's hours, <opening> to <closing>, and stays open at least 1 hour." A stall with dishes,
+tickets or cooks cannot be deleted: "This stall has dishes, tickets or cooks. Deactivate it instead."
+Record forms confirm with "<what> has been saved.", "<what> has been deactivated.", "<what>
+has been activated." or "<what> has been deleted."
+
+MEJ-DAP-03
+
+Dishes. The manager creates, edits, deactivates, reactivates and deletes dishes under
+MEJ-STL-02's rules ("A dish name has 2 to 60 characters.", "A dish costs from RM0.50 to RM99.90,
+in steps of 10 sen.", "A description has at most 120 characters."). A dish on any sent tray cannot be
+deleted: "Trays use this dish. Deactivate it instead."; deleting one takes it off trays being built. A
+price change applies only to trays sent afterwards (MEJ-TRY-07).
+
+MEJ-DAP-04
+
+The centre, halls and tables. The manager sets the centre's "Opening time" and "Closing time"
+with Save hours (whole minutes, at least 6 hours apart: "The centre stays open at least 6 hours.";
+holding every stall's hours: "The centre's hours must hold every stall's hours. Change <stall>'s hours
+first.", naming the first stall outside them). Halls: create, edit (a name of 2 to 30 characters, "A hall
+name has 2 to 30 characters."; a description of up to 200; Self-collect or Table service) and delete
+a hall that holds no table ("This hall has tables. Move them to another hall first."). A change of service
+applies only to trays sent afterwards. Tables: the 1 to 120 grid by hall; edit a table's hall, status and
+"Place note" (up to 30 characters: "A place note has at most 30 characters."); create a number
+from 1 to 120 that does not exist ("Table <number> already exists."); delete a table no sent tray has
+used ("Trays have used this table. Set it out of service instead."), which trays being built then lose.
+
+MEJ-DAP-05
+
+Teh tarik hours. The manager manages the windows under MEJ-TEH-04.
+
+MEJ-DAP-06
+
+Diners and staff. The manager creates, edits, deactivates, reactivates and deletes diners and
+members of staff, and presses Reset password for them (MEJ-ACC-04). Names and emails follow
+MEJ-ACC-02; a staff "Login" has 3 to 20 small letters a to z and is unique ("Choose a login of 3 to 20
+small letters, a to z.", "This login is taken."); a cook must belong to a stall ("A cook must belong to a
+stall."). A diner with a tray or movement, or staff who acted on a ticket, payment, top-up, dish or
+board message, cannot be deleted: "This account has history. Deactivate it instead." A manager
+cannot deactivate, delete or change the role of their own account: "You cannot deactivate, delete
+or change the role of your own account."
+
+MEJ-DAP-07
+
+Today. The manager's Today shows every stall's open tickets and state, the trays awaiting
+payment, today's takings in cash (the sum of the amounts to pay taken today) and from balances
+(the sum of the tray totals paid from balances today), and today's refunds.
+
+15. Non-functional requirements (MEJ-SEC)
+MEJ-SEC-01
+
+Own trays only. A diner sees and acts on only their own trays, tickets, receipts and balance; any
+other tray number answers "Tray not found".
+
+MEJ-SEC-02
+
+Roles on the server. Every Dapur page and action checks the staff session, the role and a cook's
+stall on the server, whatever the address. A visitor or diner reaching a Dapur page is sent to Dapur's
+sign-in.
+
+Meja Marmar · Functional Requirements Specification
+
+Page 10
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+MEJ-SEC-03
+
+The server decides. Figures come from stored data; nothing the browser sends as a price,
+amount, table, state or queue number is trusted beyond what the person chose or typed, and an
+action whose control is not offered is refused when posted.
+
+MEJ-SEC-04
+
+Text as typed. Free text (names, notes, descriptions, place notes, board messages) is stored and
+shown exactly as typed, in any script, symbols and emoji included, always as text, never as markup.
+
+MEJ-SEC-05
+
+Keyboard, labels, colour and pointer. Every control has a visible label, works by keyboard and
+shows its focus. Nothing is told by colour alone: Busy, Sold out, Closed today and every state are
+words. Everything done by dragging can also be done with a single click (the line's Tapau and Dine
+in buttons). The kitchen display's single-key shortcuts, S (start the oldest New ticket), C (call the
+oldest Cooking ticket) and H (hand over the oldest Ready ticket), act only while the focus is in no
+text field or list, each at most once per page load; the display says "Shortcuts: on" or "Shortcuts:
+off", and Turn shortcuts off and Turn shortcuts on switch them for that member of staff.
+
+MEJ-SEC-06
+
+Safe returns, forms and confirmations. Sign-in returns only to pages of Meja Marmar itself
+(MEJ-ACC-01). Every form that changes data redirects after its post, so Reload and Back never
+repeat it. A form refused for a field shows again with every value typed (never a password), the
+message beside that field and the focus on it; a refusal about the record itself (it changed, a stall
+became busy or closed) shows at the top of the page, redrawn from the record's current state.
+Two people taking the same tray number, pay code, email, login or table at the same moment
+never both succeed: the second is told "Someone else did this at the same moment. Please try
+again." and nothing is saved. Every irreversible action (Remove, Empty tray, Edit tray, Cancel this
+ticket, Cancel unpaid tray, Sold out, Mark sold out, Close for today, Deactivate, Delete, Reset
+password, Reset data) asks for confirmation once, in one dialog that names what will happen.
+
+MEJ-SEC-07
+
+Laptop first. Every page works from 1024 to 1440 px wide without horizontal scrolling, and at 200
+% zoom in a 1280 px window every control stays visible and reachable; the diner pages stay usable
+at 375 px.
+
+16. Tray states
+From
+
+Action
+
+By
+
+To
+
+(none)
+
+the first Add to tray
+
+diner
+
+Draft
+
+Draft
+
+Send tray, Pay from my balance
+
+diner
+
+Paid (tickets made)
+
+Draft
+
+Send tray, Pay cash at the cashier
+
+diner
+
+Awaiting payment
+(pay code)
+
+Awaiting payment
+
+Edit tray, when the diner is building no other tray
+
+diner
+
+Draft (pay code void)
+
+Awaiting payment
+
+Take payment
+
+cashier, manager
+
+Paid (tickets made)
+
+Awaiting payment
+
+Cancel unpaid tray
+
+cashier, manager
+
+Cancelled
+
+Paid
+
+its last open ticket becomes Collected,
+Cancelled or Refunded
+
+(a ticket action)
+
+Complete
+
+Complete and Cancelled are final. A Draft is left by sending; an emptied Draft is still a Draft, until Edit tray replaces it.
+Tickets move as MEJ-TKT-02 says; a line is Ordered or Sold out. A stall's words (MEJ-CTR-05) are worked out from its
+open tickets and the clock. No state moves on a timer.
+
+Meja Marmar · Functional Requirements Specification
+
+Page 11
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+Annex A: Accounts
+One password for every account: marmar2026. Both sign-in pages offer these demonstration accounts as buttons
+that fill the form:
+Email
+
+Name
+
+Area
+
+nuraisyah.rahman@example.com
+
+Nur Aisyah Rahman
+
+Shah Alam
+
+weiling.tan@example.com
+
+Tan Wei Ling
+
+Petaling Jaya
+
+arjun.selvarajah@example.com
+
+Arjun a/l Selvarajah
+
+Klang
+
+farid.iskandar@example.com
+
+Farid Iskandar
+
+Ampang
+
+meiyee.chong@example.com
+
+Chong Mei Yee
+
+Puchong
+
+hafiz.zulkifli@example.com
+
+Hafiz Zulkifli
+
+Kajang
+
+priya.murugan@example.com
+
+Priya Devi a/p Murugan
+
+Brickfields
+
+boonkiat.goh@example.com
+
+Goh Boon Kiat
+
+Cheras
+
+sitihajar.omar@example.com
+
+Siti Hajar Omar
+
+Bangsar
+
+Other diners, who sign in by typing their email: haslinda.matisa@example.com (Haslinda Mat Isa),
+zulaikha.nordin@example.com (Zulaikha Ahmad Nordin), norhayati.samsudin@example.com (Norhayati Samsudin),
+ainasofea.kamal@example.com (Aina Sofea Kamal), syafiq.rosdi@example.com (Syafiq Hakimi Rosdi),
+rahimah.daud@example.com (Rahimah Daud), amirul.zakaria@example.com (Amirul Asyraf Zakaria),
+nurin.azmi@example.com (Nurin Batrisya Azmi), siewpeng.lim@example.com (Lim Siew Peng),
+beelian.ong@example.com (Ong Bee Lian), kahmeng.lau@example.com (Lau Kah Meng), jiahui.kok@example.com
+(Kok Jia Hui), chinyee.teh@example.com (Teh Chin Yee), siewling.gan@example.com (Gan Siew Ling),
+karwai.tham@example.com (Tham Kar Wai), ravindran.muthu@example.com (Ravindran a/l Muthu),
+thinesh.gopal@example.com (Thinesh a/l Gopal), shalini.raju@example.com (Shalini a/p Raju),
+kavya.ramasamy@example.com (Kavya a/p Ramasamy), prakash.velu@example.com (Prakash a/l Velu).
+Login
+
+Name
+
+Role
+
+rosnah
+
+Rosnah Abdullah
+
+Manager
+
+faizal
+
+Faizal Hamdan
+
+Manager
+
+kavitha
+
+Kavitha Raman
+
+Cashier
+
+kenghock
+
+Ooi Keng Hock
+
+Cashier
+
+zainal
+
+Zainal Ariffin Musa
+
+Cook
+
+1
+
+normah
+
+Normah Yusof
+
+Cook
+
+2
+
+sulaiman
+
+Sulaiman Rafeek
+
+Cook
+
+3
+
+kheong
+
+Wong Ah Kheong
+
+Cook
+
+4
+
+ahlan
+
+Lee Ah Lan
+
+Cook
+
+5
+
+swee
+
+Chan Swee Lin
+
+Cook
+
+6
+
+esah
+
+Esah Ibrahim
+
+Cook
+
+7
+
+latiff
+
+Abdul Latiff Saad
+
+Cook
+
+8
+
+rohana
+
+Nik Rohana Nik Daud
+
+Cook
+
+9
+
+kamaruddin
+
+Kamaruddin Jusoh
+
+Cook
+
+10
+
+Meja Marmar · Functional Requirements Specification
+
+Stall
+
+Page 12
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+Annex B: Stalls and dishes
+No.
+
+Stall
+
+Cuisine
+
+Halal label
+
+Hours
+
+Last orders
+
+1
+
+Kopi & Teh Pak Zainal
+
+Drinks
+
+Halal certified
+
+7.00 am to 11.00 pm
+
+10.30 pm
+
+2
+
+Nasi Lemak Kuali Tembaga
+
+Malay
+
+Halal certified
+
+7.00 am to 10.00 pm
+
+9.30 pm
+
+3
+
+Roti Canai Tawa Emas
+
+Mamak
+
+Halal certified
+
+7.00 am to 11.00 pm
+
+10.30 pm
+
+4
+
+Char Kuey Teow Ah Kheong
+
+Chinese, Penang style No halal certificate
+
+7.00 am to 10.00 pm
+
+9.30 pm
+
+5
+
+Chicken Rice Ah Lan
+
+Hainanese
+
+No halal certificate
+
+7.00 am to 9.00 pm
+
+8.30 pm
+
+6
+
+Yong Tau Foo Auntie Swee
+
+Hakka
+
+No halal certificate
+
+7.00 am to 9.00 pm
+
+8.30 pm
+
+7
+
+Asam Laksa Mak Esah
+
+Penang Malay
+
+Halal certified
+
+11.00 am to 3.00 pm
+
+2.30 pm
+
+8
+
+Cendol & ABC Pak Latiff
+
+Desserts
+
+Halal certified
+
+12.00 pm to 5.30 pm
+
+5.00 pm
+
+9
+
+Nasi Kerabu Pauh Janggi
+
+Kelantanese
+
+Halal certified
+
+7.00 am to 11.00 am
+
+10.30 am
+
+10
+
+Satay Bara Senja
+
+Malay
+
+Halal certified
+
+5.00 pm to 11.00 pm
+
+10.30 pm
+
+Dishes, with their menu prices; (T) marks a dish with the Teh tarik hour mark.
+No.
+
+Dishes
+
+1
+
+Teh tarik RM2.80 (T); Kopi RM2.50 (T); Teh tarik ais RM3.20; Kopi O RM2.00; Coklat ais RM3.80; Sirap bandung RM2.80
+
+2
+
+Nasi lemak biasa RM4.50; Nasi lemak ayam goreng RM9.50; Nasi lemak rendang daging RM11.00; Nasi lemak sotong
+RM10.50 (inactive)
+
+3
+
+Roti canai RM1.80; Roti telur RM3.00; Murtabak ayam RM9.00; Thosai RM2.50; Mee goreng mamak RM8.00
+
+4
+
+Char kuey teow RM10.00; Char kuey teow with extra prawns RM14.00
+
+5
+
+Roast chicken rice RM9.00; Steamed chicken rice RM8.50
+
+6
+
+Yong tau foo with noodles RM9.80; Yong tau foo soup RM12.50
+
+7
+
+Asam laksa RM9.00; Laksa kari RM9.50
+
+8
+
+Cendol RM4.50; ABC (ais kacang) RM6.00; Kuih lapis RM3.60
+
+9
+
+Nasi kerabu ayam RM10.00; Lontong RM7.50
+
+10
+
+Satay ayam RM9.00; Satay daging RM11.00
+
+Annex C: Halls, tables and teh tarik hours
+The centre is open from 7.00 am to 11.00 pm.
+Hall
+
+Service
+
+Tables
+
+Laman
+
+Self-collect
+
+1 to 80; 117 to 120, place note "on the Beranda"
+
+Dewan Sejuk
+
+Table service
+
+81 to 116
+
+Tables 40 and 101 are Out of service; every other table is In use. The teh tarik hours are 9.00 to 10.59 am, 12.00 to 1.59
+pm and 3.00 to 4.59 pm.
+
+Meja Marmar · Functional Requirements Specification
+
+Page 13
+
+Meja Marmar · Medan Selera Meja Marmar
+
+MEJ-FRS-001 Version 1.0
+
+Annex D: Glossary
+Term
+
+Meaning
+
+Medan Selera
+
+A food court: many stalls, one seating area.
+
+Kopitiam
+
+A traditional coffee shop.
+
+Hall
+
+One of the centre's seating areas.
+
+Self-collect
+
+Diners collect Ready food at the stall.
+
+Table service
+
+Runners bring Ready food to the table and clear it.
+
+Laman
+
+The open-air courtyard.
+
+Dewan Sejuk
+
+The air-conditioned hall.
+
+Beranda
+
+The covered veranda, part of Laman.
+
+Tapau
+
+Taken away, packed in a container.
+
+Dapur
+
+Kitchen: the staff console.
+
+Tray
+
+A diner's order, sent and paid once.
+
+Line
+
+One dish on a tray, with its quantity.
+
+Ticket
+
+One stall's part of a paid tray.
+
+Queue number
+
+A ticket's three-digit number at its stall.
+
+The board
+
+The public wall of every stall's numbers.
+
+Pay code
+
+The four digits the cashier asks for.
+
+Amount to pay
+
+The tray total rounded for cash.
+
+Rounding
+
+The amount to pay less the tray total.
+
+Balance
+
+The diner's Meja Marmar balance.
+
+Top-up
+
+Cash paid onto a balance at the cashier.
+
+Teh tarik hour
+
+A daily window of cheaper marked drinks.
+
+Busy
+
+A stall whose trays must wait.
+
+Last orders
+
+When a stall stops taking trays.
+
+Closed today
+
+A stall closed until midnight.
+
+Message on the board
+
+A stall's note under its name.
+
+Annex E: Resetting
+Reset data (in each persona's menu, at the foot of every page and on both sign-in pages) first asks for confirmation
+in one dialog, "Reset Meja Marmar for your whole team?", whose second and third sentences read: "Your team has
+its own copy of Meja Marmar, shared by everyone on your team; no other team can see it. Resetting returns that
+copy to its starting data: everything any of you has done is lost, and all of you are signed out." Its buttons are Go
+back and Reset everything. Times move with the reset: seeded trays and tickets are placed so many days and
+minutes before it.
+
+Annex F: Photograph credits
+Every photograph's author, licence and source are on the Photograph credits page (/credits).
+
+Meja Marmar · Functional Requirements Specification
+
+Page 14
+
+

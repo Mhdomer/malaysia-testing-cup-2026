@@ -1,0 +1,275 @@
+
+
+# DEF-006: "Sold out" Offered and Accepted on Ready Tickets, Violating Ticket State Machine
+
+- **Summary \*:** "Sold out" Offered and Accepted on Ready Tickets, Violating Ticket State Machine (MEJ-TKT-02, MEJ-REF-01)
+- **Device Type:** Desktop | **OS Version:** CachyOS Linux | **Browser Type:** Chrome
+- **Priority \*:** High
+- **Severity \*:** Critical
+- **Area of Impact \*:** Dapur / Kitchen Display & Ticket States
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Issue Type \*:** Functional
+
+---
+
+## Description \*
+The Kitchen Display System (KDS) offers and processes the `"Sold out"` action on tickets that have already reached the `Ready` state, violating the ticket lifecycle rules in `MEJ-TKT-02` and `MEJ-REF-01`.
+
+Per specification, marking a ticket line as `Sold out` is only valid while a ticket is `New` or `Cooking` (before preparation is completed). On `/sut/mejamarmar/dapur/kitchen/1`, a `Ready` ticket (Ticket `213`, `2 x Teh tarik ais`) still renders the `"Sold out"` button, and confirming it transitions the `Ready` ticket directly to `Refunded`.
+
+## Steps to Reproduce \*
+1. Log in to MejaMarmar Dapur and open Stall 1 Kitchen Display at `/sut/mejamarmar/dapur/kitchen/1`.
+2. Locate a ticket in the `Ready` column (observed on Ticket `213`, `2 x Teh tarik ais`).
+3. Inspect the available action buttons on the `Ready` ticket card.
+4. Click `"Sold out"` on Ticket `213` and confirm the action.
+5. Observe the updated ticket status.
+
+## Expected Result \*
+Per `MEJ-TKT-02` and `MEJ-REF-01`, the `"Sold out"` action on a ticket line must only be offered and permitted while a ticket is in `New` or `Cooking` status. Once a ticket is `Ready`, `"Sold out"` must be hidden/disabled and rejected server-side if submitted.
+
+## Actual Result \*
+On `/sut/mejamarmar/dapur/kitchen/1`, `Ready` Ticket `213` (`2 x Teh tarik ais`) displays the `"Sold out"` button, and confirming it transitions the `Ready` ticket directly to `Refunded`.
+
+## Additional Information
+- **Spec Reference:** `MEJ-TKT-02`, `MEJ-REF-01`
+- **Observed Target:** `/sut/mejamarmar/dapur/kitchen/1` (Ticket `213`, `2 x Teh tarik ais`)
+- **Business Impact:** Enables unauthorized or erroneous full refunds on already prepared (`Ready`) items, creating inventory and revenue leakage.
+============================================================
+
+# DEF-012: IDOR Allows Any Diner to Hijack and Cancel Another Diner's Awaiting-Payment Tray via Edit Tray (`MEJ-SEC-01`, `MEJ-PAY-05`)
+
+## WBT Form Fields
+
+- **Summary \*:** IDOR allows any diner to hijack and cancel another diner's awaiting-payment tray via Edit Tray (MEJ-SEC-01, MEJ-PAY-05)
+- **Area of Impact \*:** Diner Trays & Payments / Authorization (MEJ-SEC-01)
+- **Issue Type \*:** Security
+- **Severity \*:** Critical
+- **Priority \*:** Critical
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+An Insecure Direct Object Reference (IDOR) vulnerability exists on the Edit Tray endpoint `POST /sut/mejamarmar/trays/{tray_id}/edit`. The server does not verify that the authenticated diner owns the target tray before reverting an `Awaiting payment` tray back to `My tray`.
+
+When authenticated as `nuraisyah.rahman@example.com`, submitting `POST /sut/mejamarmar/trays/1045/edit` against another diner's `Awaiting payment` tray `T-1045` is accepted by the server, voiding the victim's pending tray and displaying `"Tray T-1045 is back on My tray. Send it again when it is ready."`.
+
+---
+
+### Steps to Reproduce \*
+1. Sign in to Meja Marmar (`/sut/mejamarmar/sign-in`) as diner `nuraisyah.rahman@example.com`.
+2. Target another diner's tray currently in `Awaiting payment` status (e.g., Tray `T-1045`).
+3. Submit an authenticated `POST` request to `/sut/mejamarmar/trays/1045/edit` using `nuraisyah.rahman@example.com`'s session.
+4. Observe the server response and check the status of the victim's tray `T-1045`.
+
+---
+
+### Expected Result \*
+Per `MEJ-SEC-01`, the server must enforce strict ownership validation on `POST /sut/mejamarmar/trays/{tray_id}/edit` and reject requests for trays not owned by the authenticated diner (returning `"Tray not found"` / 403 or 404) without altering the victim's `Awaiting payment` tray.
+
+---
+
+### Actual Result \*
+The server accepts `POST /sut/mejamarmar/trays/1045/edit` from `nuraisyah.rahman@example.com`, voids the victim's `Awaiting payment` tray `T-1045`, and displays `"Tray T-1045 is back on My tray. Send it again when it is ready."`.
+
+---
+
+### Additional Information
+- **Specification References:** `MEJ-SEC-01` (Diner tray ownership enforcement), `MEJ-PAY-05` (Edit tray / awaiting payment workflow).
+- **CWE / OWASP:** CWE-639 (Authorization Bypass Through User-Controlled Key) / OWASP API1:2023 (Broken Object Level Authorization).
+- **Affected Endpoint:** `https://www.worldbesttester.com/sut/mejamarmar/trays/1045/edit`
+============================================================
+
+# DEF-013: Open Redirect on Diner Sign-In via `next` Query Parameter (`MEJ-ACC-01`, `MEJ-SEC-06`)
+
+## WBT Form Fields
+
+- **Summary \*:** Open redirect on diner sign-in via next query parameter allows external phishing redirects (MEJ-ACC-01, MEJ-SEC-06)
+- **Area of Impact \*:** Diner Authentication / Sign-In Redirect (MEJ-SEC-06)
+- **Issue Type \*:** Security
+- **Severity \*:** Critical
+- **Priority \*:** High
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+The diner sign-in flow (`/sut/mejamarmar/sign-in`) accepts an unvalidated `next` query parameter and redirects the browser to arbitrary external URLs after successful authentication.
+
+Per `MEJ-ACC-01` and `MEJ-SEC-06`, sign-in must return only to pages of Meja Marmar itself. Navigating to `/sut/mejamarmar/sign-in?next=https://evil.com` and signing in with valid credentials redirects the browser externally to `https://evil.com/`, enabling credential phishing chains where victims trust the legitimate `worldbesttester.com` login URL before being handed off to an attacker-controlled domain.
+
+---
+
+### Steps to Reproduce \*
+1. Open the browser and navigate to `https://www.worldbesttester.com/sut/mejamarmar/sign-in?next=https://evil.com`.
+2. Enter valid diner credentials (e.g., `nuraisyah.rahman@example.com`).
+3. Submit the sign-in form.
+4. Observe the post-login redirect destination in the browser address bar and network response.
+
+---
+
+### Expected Result \*
+Per `MEJ-ACC-01` and `MEJ-SEC-06`, the server must validate the `next` parameter against an allowlist of same-origin Meja Marmar paths and ignore or reject external URLs, redirecting the user to a safe default Meja Marmar page instead.
+
+---
+
+### Actual Result \*
+After valid authentication, the server redirects the browser externally to `https://evil.com/`.
+
+---
+
+### Additional Information
+- **Specification References:** `MEJ-ACC-01`, `MEJ-SEC-06` (Sign-in redirect restricted to Meja Marmar pages).
+- **CWE / OWASP:** CWE-601 (URL Redirection to Untrusted Site / Open Redirect).
+- **Affected URL:** `https://www.worldbesttester.com/sut/mejamarmar/sign-in?next=https://evil.com`
+============================================================
+
+# DEF-016: Queue Number After 999 Fails to Roll Over to 001, Generating 1000 and Displaying "0 0 0" on Split-Flap Board
+
+## WBT Form Fields
+
+- **Summary \*:** Queue number after 999 becomes 1000 instead of rolling over to 001, rendering as "0 0 0" on The Board
+- **Area of Impact \*:** Tickets, Queue Numbers & Public Split-Flap Board (MEJ-TKT-01, MEJ-BRD-02)
+- **Issue Type \*:** Functional
+- **Severity \*:** Critical
+- **Priority \*:** High
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+Per MEJ-TKT-01, each stall's queue numbers count from `001` to `999`, "and after 999 comes 001; queue numbers are always shown as three digits". However, when Stall 3 (Roti Canai Tawa Emas) reached queue number `999`, the next paid ticket generated queue number `1000` (4 digits) instead of rolling over to `001`. On the public split-flap board (`/sut/mejamarmar/board`), the 3-digit flap display truncates `1000` and renders `0 0 0`, making it impossible for diners to identify their queue number on the board.
+
+---
+
+### Steps to Reproduce \*
+1. Observe Stall 3 (Roti Canai Tawa Emas) at queue number `999`.
+2. Sign in as a diner, add a dish from Stall 3 (e.g., 1 x Roti canai), choose Table 1, and send/pay the tray (e.g., Tray `T-1057`).
+3. If paying by cash, take payment in Dapur (`/sut/mejamarmar/dapur/payments`).
+4. Inspect the generated queue number on Kitchen 3 (`/sut/mejamarmar/dapur/kitchen/3`), the diner's tray page (`/sut/mejamarmar/trays/1057`), and the public board (`/sut/mejamarmar/board`).
+
+---
+
+### Expected Result \*
+Per MEJ-TKT-01, the queue number after `999` rolls over to `001` and displays as three digits (`001`) on Kitchen Display, the diner's tray page, and The Board.
+
+---
+
+### Actual Result \*
+The server assigns queue number `1000` (4 digits) on Kitchen 3 and the diner's tray page, and the split-flap board (`/sut/mejamarmar/board`) truncates `1000` into three zeroes: `0 0 0`.
+
+---
+
+### Additional Information
+- **Specification Reference:** MEJ-FRS-001 v1.0, Section 10 (MEJ-TKT-01: "Each stall counts 001 to 999, and after 999 comes 001; queue numbers are always shown as three digits").
+- **Affected URLs:** `https://www.worldbesttester.com/sut/mejamarmar/board`, `https://www.worldbesttester.com/sut/mejamarmar/dapur/kitchen/3`.
+============================================================
+
+# DEF-019: Cashier "Take payment" Accepts Payment for Trays Holding a Busy Stall (MEJ-STL-05, MEJ-CTR-06, MEJ-PAY-04)
+
+## WBT Form Fields
+
+- **Summary \*:** Cashier "Take payment" accepts payment for trays holding a Busy stall (MEJ-STL-05, MEJ-CTR-06, MEJ-PAY-04)
+- **Area of Impact \*:** Dapur / Payments & Stall Capacity (MEJ-STL-05, MEJ-CTR-06)
+- **Issue Type \*:** Functional
+- **Severity \*:** Critical
+- **Priority \*:** High
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+Per `MEJ-STL-05`, `MEJ-CTR-06`, and `MEJ-PAY-04`, when a stall reaches 15 or more open tickets (`New`, `Cooking`, `Ready`), its status becomes `Busy` and it must stop accepting new orders. At `Take payment`, the cashier payment flow must re-check `Busy` status for every stall on the tray and refuse payment with `"<stall> is busy with <n> orders. Please try again in a few minutes."`.
+
+Instead, the cashier payment flow fails to enforce the `Busy` stall check. Even when a stall on an awaiting-payment tray already has 15 open tickets (`Busy`), taking cash payment succeeds, marks the tray `Paid`, and creates a new kitchen ticket beyond the stall's capacity threshold.
+
+---
+
+### Steps to Reproduce \*
+1. Sign in to Dapur as staff / cashier.
+2. Ensure Stall 5 (`Chicken Rice Ah Lan`) has 15 open tickets (`Busy` status, `>= 15` open tickets).
+3. Navigate to `/sut/mejamarmar/dapur/payments/1064` for awaiting-payment Tray `T-1064` containing an item from Stall 5 (`Chicken Rice Ah Lan`).
+4. Enter a valid cash tendered amount and click `"Take payment"`.
+5. Inspect the tray payment status and check Kitchen 5's active ticket queue.
+
+---
+
+### Expected Result \*
+Per `MEJ-STL-05`, `MEJ-CTR-06`, and `MEJ-PAY-04`, `Take payment` re-checks the `Busy` status of all stalls on Tray `T-1064`, refuses to process the payment, leaves the tray unpaid, and displays `"Chicken Rice Ah Lan is busy with 15 orders. Please try again in a few minutes."`.
+
+---
+
+### Actual Result \*
+`Take payment` succeeds without blocking, transitions Tray `T-1064` to `Paid`, and creates Ticket `091` in Kitchen 5, pushing Stall 5 past its 15-ticket `Busy` capacity limit.
+
+---
+
+### Additional Information
+- **Specification Reference:** MEJ-FRS-001 v1.0 (`MEJ-STL-05`, `MEJ-CTR-06`, `MEJ-PAY-04`).
+- **Affected URLs:** `https://www.worldbesttester.com/sut/mejamarmar/dapur/payments/1064`.
+============================================================
+
+# DEF-020: "Send tray" Bypasses Busy Stall Check When Paying from Diner Balance (MEJ-STL-05)
+
+## WBT Form Fields
+
+- **Summary \*:** "Send tray" bypasses Busy stall check when paying from diner balance (MEJ-STL-05)
+- **Area of Impact \*:** Diner Send Tray & Stall Capacity (MEJ-STL-05)
+- **Issue Type \*:** Functional
+- **Severity \*:** Critical
+- **Priority \*:** High
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+Per `MEJ-STL-05`, a tray holding dishes from a `Busy` stall (`>= 15` open tickets) cannot be sent regardless of payment method, and the system must block submission with `"<stall> is busy with <n> orders. Please try again in a few minutes."`.
+
+While `"Pay cash at the cashier"` enforces this `Busy` stall check and blocks the tray, choosing `"Pay from my balance"` completely bypasses the `Busy` check, deducts the tray total from the diner's balance, and creates a new kitchen ticket for the overloaded stall.
+
+---
+
+### Steps to Reproduce \*
+1. Sign in as a diner with sufficient Meja Marmar balance.
+2. Confirm Stall 5 (`Chicken Rice Ah Lan`) is in `Busy` state (16 open tickets).
+3. Add a dish from Stall 5 to the tray and open the tray checkout / Send tray flow.
+4. Select `"Pay cash at the cashier"` and attempt to send the tray. Observe that submission is blocked with the `Busy` stall error message.
+5. Switch the payment method to `"Pay from my balance"` and click `"Send tray"`.
+6. Observe the diner balance, tray status, and Kitchen 5 ticket queue.
+
+---
+
+### Expected Result \*
+Per `MEJ-STL-05`, `"Send tray"` enforces the `Busy` stall check uniformly across all payment methods. Selecting `"Pay from my balance"` must block the tray, preserve the diner's balance, and display `"Chicken Rice Ah Lan is busy with 16 orders. Please try again in a few minutes."`.
+
+---
+
+### Actual Result \*
+`"Pay cash at the cashier"` properly blocks the tray, whereas `"Pay from my balance"` bypasses the `Busy` check completely, deducts the amount from the diner's balance, marks the tray `Paid`, and creates a new ticket in Stall 5's kitchen queue.
+
+---
+
+### Additional Information
+- **Specification Reference:** MEJ-FRS-001 v1.0 (`MEJ-STL-05`).
+- **Affected Flow:** Diner Tray Checkout (`Send tray` with `"Pay from my balance"`).

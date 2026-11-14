@@ -1,0 +1,182 @@
+
+
+# DEF-015: Stalls Page Overflows 640px Effective Viewport (200% Zoom at 1280px), Clipping Stalls 5 and 10 (`MEJ-SEC-07`)
+
+## WBT Form Fields
+
+- **Summary \*:** Stalls page overflows 640px effective viewport at 200% zoom (1280px window), clipping Stalls 5 and 10 (MEJ-SEC-07)
+- **Area of Impact \*:** Diner Stalls / Responsive Zoom Accessibility (MEJ-SEC-07)
+- **Issue Type \*:** UI
+- **Severity \*:** Major
+- **Priority \*:** Medium
+- **Frequency \*:** Always
+- **Product Risk \*:** Medium
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+At 200% browser zoom inside a `1280 px` desktop window (`640 px` effective CSS viewport width), the `/sut/mejamarmar/stalls` page fails to reflow its layout. It preserves a 5-column grid inside a fixed `1000 px` container, pushing the rightmost column off-screen (`x = 796 px`) and clipping Stall 5 (Chicken Rice Ah Lan) and Stall 10 (Satay Bara Senja).
+
+---
+
+### Steps to Reproduce \*
+1. Open Chrome on a `1280 px` wide browser window and navigate to `https://www.worldbesttester.com/sut/mejamarmar/stalls`.
+2. Set browser zoom to `200%` (resulting in a `640 px` CSS viewport width).
+3. Inspect the stall grid layout and the visibility/position of Stall 5 (Chicken Rice Ah Lan) and Stall 10 (Satay Bara Senja).
+
+---
+
+### Expected Result \*
+Per `MEJ-SEC-07`, at 200% zoom in a `1280 px` window (`640 px` CSS width), the layout must reflow cleanly so that every stall card and control stays visible and reachable without horizontal clipping.
+
+---
+
+### Actual Result \*
+`/sut/mejamarmar/stalls` keeps a 5-column grid inside a fixed `1000 px` container, placing Stall 5 (Chicken Rice Ah Lan) and Stall 10 (Satay Bara Senja) at `x = 796 px` off-screen beyond the `640 px` viewport.
+
+---
+
+### Additional Information
+- **Specification Reference:** `MEJ-SEC-07` (200% zoom visibility and reachability in a 1280 px window).
+- **Affected URL:** `https://www.worldbesttester.com/sut/mejamarmar/stalls`
+============================================================
+
+# DEF-017: "Sold out" Action Offered and Accepted on Final Cancelled Tickets (MEJ-TKT-02, MEJ-REF-01)
+
+## WBT Form Fields
+
+- **Summary \*:** "Sold out" button is active and accepted on already Cancelled tickets, transitioning final state to Refunded
+- **Area of Impact \*:** Dapur / Trays & Ticket State Machine (MEJ-TKT-02, MEJ-REF-01)
+- **Issue Type \*:** Functional
+- **Severity \*:** Major
+- **Priority \*:** Medium
+- **Frequency \*:** Always
+- **Product Risk \*:** Medium
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+Per MEJ-TKT-02 and MEJ-REF-01, `Collected`, `Cancelled`, and `Refunded` are final ticket states, and `Sold out` on a ticket line may only be offered and accepted while the ticket is `New` or `Cooking`. In another state, it must not be offered and any request must be refused (`"Ticket <number> is <state>: nothing on it can be marked sold out."`). On a Cancelled tray, the `Sold out` button remains active and transitions the `Cancelled` ticket to `Refunded`.
+
+---
+
+### Steps to Reproduce \*
+1. Sign in to Dapur (`/sut/mejamarmar/dapur/sign-in`) as Manager (`rosnah` / `marmar2026`).
+2. Open a Cancelled tray in Dapur (e.g., `/sut/mejamarmar/dapur/trays/1048`, Ticket `052`).
+3. Observe the red `"Sold out"` button next to the ticket line.
+4. Click `"Sold out"` and confirm the dialog.
+
+---
+
+### Expected Result \*
+Per MEJ-TKT-02 and MEJ-REF-01, `"Sold out"` is not offered on `Cancelled` tickets, and attempting it is refused without changing the final `Cancelled` state.
+
+---
+
+### Actual Result \*
+The `"Sold out"` button is active and clickable on Ticket `052` (state: `Cancelled`). Confirming it transitions the final `Cancelled` ticket to `Refunded` and records a `RM0.00` refund.
+
+---
+
+### Additional Information
+- **Specification Reference:** MEJ-FRS-001 v1.0, Section 10 (MEJ-TKT-02: "Collected, Cancelled and Refunded are final") and Section 12 (MEJ-REF-01).
+- **Affected URL:** `https://www.worldbesttester.com/sut/mejamarmar/dapur/trays/1048`.
+============================================================
+
+# DEF-021: Kitchen Display Single-Key Shortcuts (S, C, H) Fire While Typing Inside "Message on the board" Text Input (MEJ-SEC-05)
+
+## WBT Form Fields
+
+- **Summary \*:** Kitchen Display single-key shortcuts (S, C, H) fire while typing inside "Message on the board" text input (MEJ-SEC-05)
+- **Area of Impact \*:** Dapur / Kitchen Display Keyboard Shortcuts & Accessibility (MEJ-SEC-05)
+- **Issue Type \*:** Functional
+- **Severity \*:** Major
+- **Priority \*:** High
+- **Frequency \*:** Always
+- **Product Risk \*:** Medium
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+Per `MEJ-SEC-05` and WCAG 2.1 SC 2.1.4 (Character Key Shortcuts), single-key shortcuts `S`, `C`, and `H` on the Kitchen Display must act "only while the focus is in no text field or list".
+
+Instead, the global `keydown` handler on `/sut/mejamarmar/dapur/kitchen/1` (and `/kitchen/2`) does not ignore events originating from `<input>` or `<textarea>` elements. When staff focus inside the `"Message on the board"` text input and type normal words containing `s`, `c`, or `h`, the keyboard shortcuts fire simultaneously, erratically advancing active kitchen tickets while typing a board message.
+
+---
+
+### Steps to Reproduce \*
+1. Sign in to Dapur and navigate to `/sut/mejamarmar/dapur/kitchen/1` (or `/sut/mejamarmar/dapur/kitchen/2`) with active tickets in the queue.
+2. Click inside the `"Message on the board"` text input field to give it keyboard focus.
+3. Type `"Special lunch hot soup"` into the input field.
+4. Observe the kitchen ticket statuses and board state as the letters `s`, `c`, and `h` are typed.
+
+---
+
+### Expected Result \*
+Per `MEJ-SEC-05` and WCAG 2.1 SC 2.1.4, single-key shortcuts (`S`, `C`, `H`) are suppressed whenever focus is inside a text field or list. Typing `"Special lunch hot soup"` inside `"Message on the board"` should only populate the text input without triggering any ticket state transitions.
+
+---
+
+### Actual Result \*
+Typing `"Special lunch hot soup"` inside `"Message on the board"` triggers the global `keydown` shortcuts for `s`, `c`, and `h`, erratically advancing kitchen tickets in the background while the user is typing.
+
+---
+
+### Additional Information
+- **Specification Reference:** MEJ-FRS-001 v1.0 (`MEJ-SEC-05`) and WCAG 2.1 Level A SC 2.1.4 (Character Key Shortcuts).
+- **Affected URLs:** `https://www.worldbesttester.com/sut/mejamarmar/dapur/kitchen/1`, `https://www.worldbesttester.com/sut/mejamarmar/dapur/kitchen/2`.
+============================================================
+
+# DEF-022: Kitchen Display Omits Primary <h1> Heading, Breaking Accessibility Heading Hierarchy (WCAG 2.1 SC 1.3.1 / 2.4.6)
+
+## WBT Form Fields
+
+- **Summary \*:** Kitchen Display omits primary <h1> heading, breaking accessibility heading hierarchy (WCAG 2.1 SC 1.3.1 / 2.4.6)
+- **Area of Impact \*:** Dapur / Kitchen Display Accessibility (WCAG 2.1 AA)
+- **Issue Type \*:** UI
+- **Severity \*:** Minor
+- **Priority \*:** Low
+- **Frequency \*:** Always
+- **Product Risk \*:** Low
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+On the Dapur Kitchen Display pages (`/sut/mejamarmar/dapur/kitchen/1`, `/kitchen/2`, and `/kitchen/5`), the DOM omits a primary `<h1>` heading (`h1Count: 0`) and begins the document outline directly with `<h2>` headings (`"Shortcuts: on"`, `"New"`, `"Cooking"`, `"Ready"`).
+
+Missing a top-level `<h1>` landmark heading breaks logical document structure and impairs screen reader navigation, violating WCAG 2.1 SC 1.3.1 (Info and Relationships) and SC 2.4.6 (Headings and Labels).
+
+---
+
+### Steps to Reproduce \*
+1. Sign in to Dapur and navigate to `/sut/mejamarmar/dapur/kitchen/1` (repeat on `/kitchen/2` and `/kitchen/5`).
+2. Open Chrome DevTools Elements panel or run an accessibility / DOM outline check (`document.querySelectorAll('h1').length` and `document.querySelectorAll('h2')`).
+3. Inspect the heading hierarchy of the rendered page.
+
+---
+
+### Expected Result \*
+Each Kitchen Display page should contain a single descriptive primary `<h1>` heading (for example, the stall/kitchen name) before the secondary `<h2>` section headings (`"Shortcuts: on"`, `"New"`, `"Cooking"`, `"Ready"`), maintaining a valid WCAG 2.1 heading hierarchy.
+
+---
+
+### Actual Result \*
+`document.querySelectorAll('h1').length` is `0` across `/kitchen/1`, `/kitchen/2`, and `/kitchen/5`. The heading tree starts directly at `<h2>` (`"Shortcuts: on"`, `"New"`, `"Cooking"`, `"Ready"`).
+
+---
+
+### Additional Information
+- **Accessibility Reference:** WCAG 2.1 SC 1.3.1 (Info and Relationships) / SC 2.4.6 (Headings and Labels).
+- **Affected URLs:** `https://www.worldbesttester.com/sut/mejamarmar/dapur/kitchen/1`, `https://www.worldbesttester.com/sut/mejamarmar/dapur/kitchen/2`, `https://www.worldbesttester.com/sut/mejamarmar/dapur/kitchen/5`.

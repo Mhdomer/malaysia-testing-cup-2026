@@ -1,0 +1,207 @@
+
+
+# DEF-018: Multi-Stall Ticket Cancellation Refunds Full Tray Total per Ticket (2x to 5x Balance Exploitation)
+
+## WBT Form Fields
+
+- **Summary \*:** Cancelling individual tickets on a multi-stall tray refunds the full tray total for each ticket, allowing 2x to 5x balance multiplication
+- **Area of Impact \*:** Refunds, Tickets & Diner Balance Accounting (MEJ-REF-03, MEJ-TKT-03)
+- **Issue Type \*:** Functional
+- **Severity \*:** Blocker
+- **Priority \*:** Critical
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+Per MEJ-REF-03 ("Cancel this ticket"), cancelling a `New` ticket must refund "that ticket's section total", and per MEJ-TKT-03 ("One ticket at a time"), "one ticket's money never moves another's." Instead, the server credits the **entire tray total** every time any ticket on a multi-stall tray is cancelled. On a 2-stall tray paid with `RM7.40` cash (`RM7.42` unrounded total), cancelling both `New` tickets sequentially credits `RM7.42 + RM7.42 = RM14.84` (200% of the tray cost) to the diner's balance. With 4 or 5 stalls on one tray, a diner can multiply their balance up to 400% or 500% on every order.
+
+---
+
+### Steps to Reproduce \*
+1. Sign in as a diner (e.g. `arjun.selvarajah@example.com` / `marmar2026`).
+2. Build and pay a tray spanning 2 stalls (or inspect paid Tray `T-1036`, Tray total `RM7.42`, Cash paid `RM7.40`):
+   - Ticket `217` (Stall 1 - Kopi & Teh Pak Zainal): 1 x Kopi O (`RM2.00` + `RM0.12` tax = **Section total `RM2.12`**).
+   - Ticket `999` (Stall 3 - Roti Canai Tawa Emas): 2 x Thosai (`RM5.00` + `RM0.30` tax = **Section total `RM5.30`**).
+3. Open `/sut/mejamarmar/trays/1036` and click `"Cancel this ticket"` on Ticket `217`. Observe confirmation modal text: `"Cancel ticket 217? Its RM7.42 goes back to your Meja Marmar balance"` and confirm.
+4. Click `"Cancel this ticket"` on Ticket `999` and confirm.
+5. Open `/sut/mejamarmar/balance` and inspect the refund ledger entries.
+
+---
+
+### Expected Result \*
+Per MEJ-REF-03 and MEJ-TKT-03, cancelling Ticket `217` refunds only `RM2.12` (Stall 1's section total), and cancelling Ticket `999` refunds only `RM5.30` (Stall 3's section total), totalling `RM7.42`.
+
+---
+
+### Actual Result \*
+Cancelling Ticket `217` credits `RM7.42` (`"Cancelled, refunded RM7.42"`), and cancelling Ticket `999` credits another `RM7.42` (`"Cancelled, refunded RM7.42"`). The diner receives `RM14.84` in total refunds for a `RM7.40` cash payment, enabling arbitrary balance multiplication across multi-stall trays.
+
+---
+
+### Additional Information
+- **Specification Reference:** MEJ-FRS-001 v1.0, Section 10 (MEJ-TKT-03: "one ticket's money never moves another's") and Section 12 (MEJ-REF-03: "the refund is that ticket's section total").
+- **Affected URLs:** `https://www.worldbesttester.com/sut/mejamarmar/trays/1036`, `https://www.worldbesttester.com/sut/mejamarmar/balance`.
+- **Golden Bug Note:** Combined with `MEJ-BAL-03` (refunds are not capped at RM500.00), this allows an attacker to mint unlimited balance.
+============================================================
+
+# DEF-005: Paid Tray Can Be Cancelled via "Cancel unpaid tray", Bypassing Refund Flow
+
+- **Summary \*:** Paid Tray Can Be Cancelled via "Cancel unpaid tray", Bypassing Refund Flow (MEJ-PAY-05)
+- **Device Type:** Desktop | **OS Version:** CachyOS Linux | **Browser Type:** Chrome
+- **Priority \*:** Critical
+- **Severity \*:** Blocker
+- **Area of Impact \*:** Dapur / Trays & Payment State Machine
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Issue Type \*:** Functional
+
+---
+
+## Description \*
+The Dapur tray management interface and backend fail to enforce payment state immutability on `Paid` trays as required by `MEJ-PAY-05`. On a tray that has already been settled (`Paid`), the `"Cancel unpaid tray"` action remains active and clickable, and submitting it transitions the `Paid` tray directly to `Cancelled`.
+
+This breaks the payment and refund state machine by allowing a paid order (such as tray `T-1048`, paid RM10.70 in cash) to be cancelled without triggering the `MEJ-REF` refund accounting flow, creating financial reconciliation discrepancies.
+
+## Steps to Reproduce \*
+1. Log in to MejaMarmar Dapur as an authorized staff/cashier user.
+2. Navigate to `/sut/mejamarmar/dapur/trays/1048` (tray `T-1048`, status `Paid`, settled for `RM10.70` in cash).
+3. Observe the action controls on the tray detail page.
+4. Click `"Cancel unpaid tray"` and confirm the cancellation.
+5. Observe the resulting status banner and tray state.
+
+## Expected Result \*
+Per `MEJ-PAY-05`, `"Cancel unpaid tray"` must neither be offered in the UI nor accepted by the server once a tray is `Paid`. If a cancellation attempt is submitted for a `Paid` tray, the system must refuse the request with `"Tray <number> is Paid: it can no longer be changed."` and require any post-payment reversal to go through the `MEJ-REF` refund workflow.
+
+## Actual Result \*
+On `Paid` tray `T-1048` (`/sut/mejamarmar/dapur/trays/1048`, paid RM10.70 in cash), `"Cancel unpaid tray"` is active and clickable. Clicking it transitions the `Paid` tray to `Cancelled` and displays `"Tray T-1048 has been cancelled."`, bypassing `MEJ-REF` refund accounting.
+
+## Additional Information
+- **Spec Reference:** `MEJ-PAY-05`, `MEJ-REF`
+- **Observed Target:** `/sut/mejamarmar/dapur/trays/1048` (Tray `T-1048`, `RM10.70` Cash)
+- **Business Impact:** Direct financial reconciliation risk; paid cash/card transactions can be voided as unpaid cancellations without generating refund records.
+============================================================
+
+# DEF-001: IDOR Vulnerability Allows Any Diner to View Other Diners' Trays, Orders, and Billing
+
+- **Summary \*:** IDOR Allows Any Diner to View Other Diners' Trays, Orders, and Billing (MEJ-SEC-01)
+- **Device Type:** Desktop | **OS Version:** CachyOS Linux | **Browser Type:** Chrome
+- **Priority \*:** Critical
+- **Severity \*:** Critical
+- **Area of Impact \*:** Diner Tray Access Control / Authorization (`/sut/mejamarmar/trays/{id}`)
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Issue Type \*:** Security
+
+---
+
+## Description \*
+An Insecure Direct Object Reference (IDOR) / Broken Object Level Authorization (BOLA) vulnerability exists on the tray detail endpoint `/sut/mejamarmar/trays/{id}`. An authenticated diner can directly navigate to or request sequential numeric tray IDs belonging to other diners without any server-side ownership validation.
+
+While logged in as `nuraisyah.rahman@example.com` (who only owns trays `T-1031`, `T-1021`, and `T-1013`), accessing `/sut/mejamarmar/trays/1030`, `/sut/mejamarmar/trays/1029`, `/sut/mejamarmar/trays/1020`, and `/sut/mejamarmar/trays/1001` returns HTTP 200 OK with full order items, table assignments, diner names, and billing totals belonging to other customers (such as Ahmad Faizul and Siti Khadijah).
+
+## Steps to Reproduce \*
+1. Log in to MejaMarmar as diner `nuraisyah.rahman@example.com`.
+2. Navigate to the My Trays page and confirm the account only owns trays `T-1031`, `T-1021`, and `T-1013`.
+3. In the browser address bar, directly navigate to `/sut/mejamarmar/trays/1030`.
+4. Repeat for `/sut/mejamarmar/trays/1029`, `/sut/mejamarmar/trays/1020`, and `/sut/mejamarmar/trays/1001`.
+5. Observe the HTTP response status and rendered page content.
+
+## Expected Result \*
+Per specification `MEJ-SEC-01`, the server should enforce strict object-level ownership checks on `/sut/mejamarmar/trays/{id}` and return `"Tray not found"` (with an appropriate 404/403 status) when a diner requests a tray ID they do not own.
+
+## Actual Result \*
+The server returns HTTP 200 OK and renders the complete tray details, ordered dishes, table information, and billing breakdown of other diners (e.g., Ahmad Faizul, Siti Khadijah).
+
+## Additional Information
+- **Spec Reference:** `MEJ-SEC-01`
+- **CWE / OWASP:** CWE-639 (Authorization Bypass Through User-Controlled Key) / OWASP API1:2023 (Broken Object Level Authorization)
+- **CVSS v3.1 (Estimated):** 6.5 Medium (`CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N`) - full PII, order history, and billing exposure across all sequential tray IDs.
+============================================================
+
+# DEF-002: Cashier 5-Sen Rounding Rounds 6 and 7 Sen Up Instead of Down
+
+- **Summary \*:** Cashier 5-Sen Rounding Rounds 6 and 7 Sen Up Instead of Down (MEJ-PAY-02)
+- **Device Type:** Desktop | **OS Version:** CachyOS Linux | **Browser Type:** Chrome
+- **Priority \*:** High
+- **Severity \*:** Critical
+- **Area of Impact \*:** Cashier Billing / 5-Sen Rounding Calculation
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Issue Type \*:** Functional
+
+---
+
+## Description \*
+The cashier billing calculation violates Bank Negara Malaysia (BNM) 5-sen rounding rules as defined in `MEJ-PAY-02`. Specifically, when a bill total before rounding ends in `6` sen or `7` sen, the system rounds the payable total **up** to the nearest `10` sen instead of rounding **down** to `5` sen.
+
+This results in systematic overcharging of customers on every transaction ending in `0.06` or `0.07` RM (e.g., `RM8.67` becomes `RM8.70` instead of `RM8.65`, and `RM120.96` becomes `RM121.00` instead of `RM120.95`).
+
+## Steps to Reproduce \*
+1. Create or open a tray whose subtotal plus applicable taxes/fees produces a pre-rounding total ending in `6` or `7` sen (for example, `RM8.67` or `RM120.96`).
+2. Proceed to the checkout / cashier billing summary for the tray.
+3. Inspect the `Rounding` line item and the final `Total Payable` amount.
+
+## Expected Result \*
+Per `MEJ-PAY-02`, totals ending in `6` or `7` sen must round **down** to the nearest `5` sen:
+- `RM8.67` rounds down to `RM8.65` (`Rounding: -RM0.02`).
+- `RM120.96` rounds down to `RM120.95` (`Rounding: -RM0.01`).
+
+## Actual Result \*
+Totals ending in `6` or `7` sen round **up** to the next `10` sen:
+- `RM8.67` rounds up to `RM8.70` (`Rounding: RM0.03`).
+- `RM120.96` rounds up to `RM121.00` (`Rounding: RM0.04`).
+
+## Additional Information
+- **Spec Reference:** `MEJ-PAY-02`
+- **Business Impact:** Direct financial discrepancy and customer overcharging; non-compliant with Malaysian 5-sen rounding standard (where 1, 2, 6, 7 sen round down and 3, 4, 8, 9 sen round up).
+============================================================
+
+# DEF-010: Today's "Takings in cash" Sums Unrounded Tray Totals Instead of Actual 5-Sen Rounded Amounts Paid
+
+## WBT Form Fields
+
+- **Summary \*:** Today's "Takings in cash" sums unrounded tray totals instead of the 5-sen rounded amounts to pay taken at the counter
+- **Area of Impact \*:** Dapur / Today Financial Reporting (MEJ-DAP-07)
+- **Issue Type \*:** Functional
+- **Severity \*:** Critical
+- **Priority \*:** High
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Device Type:** Desktop
+- **OS Version:** CachyOS Linux
+- **Browser Type:** Chrome
+
+---
+
+### Description \*
+Per MEJ-DAP-07, the Manager's `Today` dashboard must display "today's takings in cash (the sum of the amounts to pay taken today) and from balances (the sum of the tray totals paid from balances today)". However, the server calculates "Takings in cash" by summing the unrounded `tray_total` instead of the 5-sen rounded `amount_to_pay` actually collected at the cashier counter. Even the baseline seeded takings figure (`RM384.78`, ending in 8 sen) is mathematically impossible as a sum of 5-sen rounded cash payments.
+
+---
+
+### Steps to Reproduce \*
+1. Sign in to Dapur (`/sut/mejamarmar/dapur/sign-in`) as Manager (`rosnah` / `marmar2026`).
+2. On `/sut/mejamarmar/dapur/` (`Today`), note the initial "Takings in cash" figure (e.g. `RM384.78`).
+3. Navigate to `Payments` (`/sut/mejamarmar/dapur/payments`) and open a tray awaiting cash payment whose total is affected by 5-sen rounding, such as Tray `T-1036` (Tray total: `RM7.42`, Rounding: `-RM0.02`, Amount to pay: `RM7.40`).
+4. Complete "Take payment" for `T-1036` (Cash received `RM10.00`, Change `RM2.60`).
+5. Return to `/sut/mejamarmar/dapur/` (`Today`) and inspect the updated "Takings in cash" value.
+
+---
+
+### Expected Result \*
+Per MEJ-DAP-07, "Takings in cash" increases by the actual amount to pay taken at the counter (`RM7.40`), and the total is always a multiple of 5 sen.
+
+---
+
+### Actual Result \*
+"Takings in cash" increased by `RM7.42` (the unrounded tray total) instead of `RM7.40` (the amount to pay), changing from `RM384.78` to `RM392.20`. This causes daily cash reconciliation on Dapur's Today dashboard to diverge from actual physical cash in the till on every rounded transaction.
+
+---
+
+### Additional Information
+- **Specification Reference:** MEJ-FRS-001 v1.0, Section 14 (MEJ-DAP-07: "today's takings in cash (the sum of the amounts to pay taken today)").
+- **Affected URL:** `https://www.worldbesttester.com/sut/mejamarmar/dapur/`.

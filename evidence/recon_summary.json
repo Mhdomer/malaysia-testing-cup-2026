@@ -1,0 +1,22 @@
+{
+  "target_url": "https://www.worldbesttester.com/sut/mejamarmar/",
+  "timestamp": "2026-11-14 05:02:34",
+  "crawler": {
+    "status": "success",
+    "duration_sec": 2.36,
+    "stdout": "[+] Initializing SUT crawler against: https://www.worldbesttester.com/sut/mejamarmar/\n\n=== \ud83c\udfaf SUT DIAGNOSTIC REPORT ===\nPage Title:      Access Denied\nLoad Duration:   1489 ms\nForms Detected:  0\nInput Fields:    0\nButtons Found:   4\nConsole Errors:  1\nNetwork Errors:  1\nScreenshot:      /mnt/data/Projects/malaysia-testing-cup-2026/evidence/sut_www_worldbesttester_com_1794621756899.png\n\n[!] Console Errors Detected:\n  - Failed to load resource: the server responded with a status of 403 ()\n\n[!] Network / HTTP Errors:\n  - [403] https://www.worldbesttester.com/sut/mejamarmar/ ()\n\n[\u2713] Diagnostic sweep complete.\n",
+    "stderr": ""
+  },
+  "accessibility": {
+    "status": "success",
+    "duration_sec": 3.0,
+    "stdout": "[+] Launching WCAG 2.1 AA Accessibility Audit against: https://www.worldbesttester.com/sut/mejamarmar/\n\n=== \u267f WCAG ACCESSIBILITY AUDIT REPORT ===\nTarget:         https://www.worldbesttester.com/sut/mejamarmar/\nPassed Rules:   15\nViolations:     0\n\n[\u2713] Zero WCAG 2.1 AA violations detected!\n",
+    "stderr": ""
+  },
+  "security": {
+    "status": "success",
+    "duration_sec": 8.42,
+    "stdout": "\n=== \ud83d\udee1\ufe0f HTTP SECURITY HEADERS & CORS AUDIT ===\nTarget: https://www.worldbesttester.com/sut/mejamarmar/\nHTTP Status: 403\n\n[!] [INFO LEAK] Server: nginx/1.26.3 (Ubuntu)\n\nSecurity Headers Compliance:\n  [\u2717] MISSING: Content-Security-Policy (Mitigates XSS and data injection attacks)\n  [\u2713] X-Frame-Options: SAMEORIGIN...\n  [\u2713] Strict-Transport-Security: max-age=15768000...\n  [\u2713] X-Content-Type-Options: nosniff...\n  [\u2713] Referrer-Policy: strict-origin-when-cross-origin...\n  [\u2717] MISSING: Permissions-Policy (Restricts browser features like camera, microphone, geolocation)\n\nCORS Policy:\n  [\u2713] CORS headers not reflecting arbitrary origin.\n\nCookie Security Flags:\n  Cookie 'session': Secure=True, HttpOnly=True, SameSite=True\n\n=== \ud83d\udd0d SENSITIVE ROUTE & ENDPOINT RECONNAISSANCE ===\nBase: https://www.worldbesttester.com\n  [!] FOUND [HTTP 200]: /robots.txt (Data preview: 500 bytes)\n  [!] FOUND [HTTP 200]: /sitemap.xml (Data preview: 500 bytes)\n",
+    "stderr": ""
+  }
+}

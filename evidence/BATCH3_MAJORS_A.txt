@@ -1,0 +1,116 @@
+
+
+# DEF-003: Teh Tarik Hour Applies 2-Cup Limit Per Dish Line Instead of Per Tray and Discounts Cheaper Cup
+
+- **Summary \*:** Teh Tarik Hour Applies 2-Cup Limit Per Dish Line Instead of Per Tray (MEJ-TEH-03)
+- **Device Type:** Desktop | **OS Version:** CachyOS Linux | **Browser Type:** Chrome
+- **Priority \*:** High
+- **Severity \*:** Major
+- **Area of Impact \*:** Promotional Pricing / Teh Tarik Hour Discount Engine
+- **Frequency \*:** Always
+- **Product Risk \*:** High
+- **Issue Type \*:** Functional
+
+---
+
+## Description \*
+During active Teh Tarik Hour, the promotional discount logic enforces the 2-cup RM1.50 promotional cap **per dish line** rather than **per tray**, and fails to prioritize the 2 dearest (highest menu price) eligible cups across the tray.
+
+When a tray contains 3 x `Teh tarik` (RM2.80 each) and 1 x `Kopi` (RM2.50), the system discounts 2 x `Teh tarik` AND 1 x `Kopi` (3 discounted cups total on a single tray), while charging the 3rd `Teh tarik` (RM2.80) at full price.
+
+## Steps to Reproduce \*
+1. Ensure Teh Tarik Hour promotion is active.
+2. Open a new tray as a diner.
+3. Add 3 x `Teh tarik` (menu price RM2.80 each) to the tray.
+4. Add 1 x `Kopi` (menu price RM2.50) to the same tray.
+5. View the tray summary and itemized promotional pricing breakdown.
+
+## Expected Result \*
+Per `MEJ-TEH-03`:
+1. At most **2 cups across the entire tray** receive the RM1.50 Teh Tarik Hour price.
+2. The **2 dearest cups by menu price** must receive the discount first.
+For 3 x `Teh tarik` (RM2.80) + 1 x `Kopi` (RM2.50): 2 x `Teh tarik` should be priced at RM1.50 each, the 3rd `Teh tarik` at RM2.80, and `Kopi` at RM2.50 (total 2 discounted cups).
+
+## Actual Result \*
+The system applies the RM1.50 promotional price to 2 x `Teh tarik` AND 1 x `Kopi` (3 cups discounted on the tray), while charging the 3rd `Teh tarik` (RM2.80) at full price.
+
+## Additional Information
+- **Spec Reference:** `MEJ-TEH-03`
+- **Business Impact:** Revenue leakage (more than 2 promotional cups granted per tray by splitting across drink types) and incorrect discount allocation (cheaper drink discounted ahead of a dearer eligible drink).
+============================================================
+
+# DEF-004: Off-by-One Limit Blocks Adding Dishes from a 5th Stall to a Tray
+
+- **Summary \*:** Off-by-One Limit Blocks Adding Dishes from a 5th Stall to a Tray (MEJ-TRY-02)
+- **Device Type:** Desktop | **OS Version:** CachyOS Linux | **Browser Type:** Chrome
+- **Priority \*:** High
+- **Severity \*:** Major
+- **Area of Impact \*:** Tray Management / Multi-Stall Order Validation
+- **Frequency \*:** Always
+- **Product Risk \*:** Medium
+- **Issue Type \*:** Functional
+
+---
+
+## Description \*
+An off-by-one boundary error (`< 5` or `>= 4` check instead of `> 5`) prevents diners from adding dishes from a 5th distinct stall to an active tray. Although the specification and error message both state that a tray can hold dishes from up to 5 stalls, the application blocks the user as soon as 4 stalls are present on the tray.
+
+## Steps to Reproduce \*
+1. Log in as a diner and start a new tray.
+2. Add at least 1 dish from Stall 1.
+3. Add at least 1 dish from Stall 2.
+4. Add at least 1 dish from Stall 3.
+5. Add at least 1 dish from Stall 4 (tray now contains dishes from 4 distinct stalls).
+6. Attempt to add a dish from Stall 5 to the same tray.
+
+## Expected Result \*
+Per `MEJ-TRY-02`, a tray holds dishes from **at most 5 stalls** (`<= 5`). Adding a dish from a 5th distinct stall should succeed, and only attempting to add from a 6th distinct stall should be blocked.
+
+## Actual Result \*
+With dishes from only 4 stalls on the tray, attempting to add a dish from a 5th stall is blocked with the error message:
+`"A tray can hold dishes from up to 5 stalls. Send this tray first, then start another."`
+
+## Additional Information
+- **Spec Reference:** `MEJ-TRY-02`
+- **Root Cause (Likely):** Off-by-one comparison (`distinctStalls.length >= 4` or `>= MAX_STALLS - 1`) before inserting the new stall's dish.
+============================================================
+
+# DEF-007: Kitchen Display Single-Key Shortcuts S, C, H Advance Multiple Tickets Simultaneously
+
+- **Summary \*:** Kitchen Display Single-Key Shortcuts S, C, H Advance Multiple Tickets Simultaneously (MEJ-SEC-05)
+- **Device Type:** Desktop | **OS Version:** CachyOS Linux | **Browser Type:** Chrome
+- **Priority \*:** High
+- **Severity \*:** Major
+- **Area of Impact \*:** Dapur / Kitchen Display Keyboard Shortcuts
+- **Frequency \*:** Always
+- **Product Risk \*:** Medium
+- **Issue Type \*:** Functional
+
+---
+
+## Description \*
+The Kitchen Display keyboard shortcut handler on `/sut/mejamarmar/dapur/kitchen/1` advances multiple tickets at once instead of advancing only the single oldest ticket in the target column, violating `MEJ-SEC-05`.
+
+When `Shortcuts: on` is active, a single keypress of `S` (Start), `C` (Call / Ready), or `H` (Hand over) fires across multiple tickets in the corresponding column simultaneously rather than acting on the oldest ticket at most once per page load.
+
+## Steps to Reproduce \*
+1. Log in to MejaMarmar Dapur and open Stall 1 Kitchen Display at `/sut/mejamarmar/dapur/kitchen/1`.
+2. Ensure multiple tickets exist in the `New`, `Cooking`, and `Ready` columns (for example, `New` tickets `212` and `214`).
+3. Verify `Shortcuts: on` is enabled on the Kitchen Display.
+4. Press the `S` key once and observe the `New` and `Cooking` columns.
+5. Press the `C` key once and observe the `Cooking` and `Ready` columns.
+6. Press the `H` key once and observe the `Ready` column.
+
+## Expected Result \*
+Per `MEJ-SEC-05`, single-key shortcuts `S` (start oldest `New` ticket), `C` (call oldest `Cooking` ticket), and `H` (hand over oldest `Ready` ticket) must act only on the single oldest ticket of each respective column, at most once per page load.
+
+## Actual Result \*
+With `Shortcuts: on` on `/sut/mejamarmar/dapur/kitchen/1`:
+- Pressing `S` once transitioned multiple `New` tickets (`212` and `214`) to `Cooking` simultaneously.
+- Pressing `C` once moved 2 `Cooking` tickets to `Ready` simultaneously.
+- Pressing `H` once handed over 2 `Ready` tickets simultaneously.
+
+## Additional Information
+- **Spec Reference:** `MEJ-SEC-05`
+- **Observed Target:** `/sut/mejamarmar/dapur/kitchen/1` (`Shortcuts: on`, Tickets `212` & `214`)
+- **Operational Impact:** Causes kitchen staff to accidentally advance or hand over multiple customer orders with a single keystroke, disrupting order fulfillment tracking.
